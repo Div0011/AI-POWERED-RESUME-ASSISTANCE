@@ -1,0 +1,13 @@
+node_modules/
+.next/
+out/
+build/
+dist/
+venv/
+__pycache__/
+*.pyc
+.env
+.DS_Store
+backend/uploads/
+backend/resume.db
+.vscode/

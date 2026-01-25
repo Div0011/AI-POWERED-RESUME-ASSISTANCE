@@ -1,0 +1,31 @@
+screening_prompt: |
+  Analyze the following resume against the job description.
+  
+  Job Description:
+  {job_description}
+  
+  Resume:
+  {resume_text}
+  
+  Extract:
+  1. Matching Skills
+  2. Missing Skills
+  3. Years of Experience
+  
+  Return as JSON.
+
+reasoning_prompt: |
+  Review this analysis and the original resume. 
+  Look for skills claimed in the 'Skills' section that have NO corresponding project or work experience evidence.
+  
+  Analysis:
+  {analysis}
+  
+  Resume:
+  {resume_text}
+  
+  Task:
+  1. Assign a confidence_score: "High", "Medium", or "Low".
+  2. Provide a detailed explanation. If "Low", explain which skills lack evidence.
+  
+  Return as JSON with keys: "confidence_score", "explanation".
