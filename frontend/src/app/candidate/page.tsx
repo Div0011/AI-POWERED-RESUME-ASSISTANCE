@@ -33,7 +33,7 @@ export default function CandidateHub() {
     ];
 
     return (
-        <div className="min-h-screen p-8 text-white flex flex-col items-center justify-center">
+        <div className="min-h-screen p-4 md:p-8 pt-20 md:pt-28 text-white flex flex-col items-center justify-center pb-24 md:pb-8">
             <header className="mb-16 text-center">
                 <h1 className="text-5xl font-bold tracking-wide mb-4 drop-shadow-md uppercase" style={{ fontFamily: 'var(--font-agale)' }}>
                     Candidate Hub

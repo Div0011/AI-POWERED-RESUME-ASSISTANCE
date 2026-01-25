@@ -76,7 +76,7 @@ function JobDetailsContent() {
     if (!job) return <div className="p-8 text-white">Loading job details...</div>;
 
     return (
-        <div className="min-h-screen p-4 md:p-8 text-white pb-24 md:pb-8">
+        <div className="min-h-screen p-4 md:p-8 pt-20 md:pt-28 text-white pb-24 md:pb-8">
             <div className="max-w-6xl mx-auto">
                 <header className="mb-14 text-center">
                     <h1 className="text-4xl md:text-5xl font-bold tracking-wide mb-6 drop-shadow-md border-b-2 border-white/20 pb-6 inline-block uppercase mt-12 md:mt-0" style={{ fontFamily: 'var(--font-agale)' }}>{job.title}</h1>

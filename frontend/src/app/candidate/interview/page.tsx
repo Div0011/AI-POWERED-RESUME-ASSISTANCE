@@ -61,7 +61,7 @@ export default function InterviewPrepPage() {
     }, [messages]);
 
     return (
-        <div className="min-h-screen p-4 md:p-8 text-white flex flex-col items-center pb-24 md:pb-8">
+        <div className="min-h-screen p-4 md:p-8 pt-20 md:pt-28 text-white flex flex-col items-center pb-24 md:pb-8">
 
             {!isStarted ? (
                 /* Welcome Screen */

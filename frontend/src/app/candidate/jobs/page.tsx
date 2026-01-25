@@ -14,10 +14,10 @@ const MOCK_PUBLIC_JOBS = [
 
 export default function JobMatchPage() {
     return (
-        <div className="min-h-screen p-8 text-white">
+        <div className="min-h-screen p-4 md:p-8 pt-20 md:pt-28 text-white pb-24 md:pb-8">
             <div className="max-w-5xl mx-auto">
                 <header className="mb-12 text-center">
-                    <h1 className="text-4xl font-bold tracking-wide mb-4 drop-shadow-md uppercase" style={{ fontFamily: 'var(--font-agale)' }}>
+                    <h1 className="text-4xl md:text-5xl font-bold tracking-wide mb-4 drop-shadow-md uppercase mt-12 md:mt-0" style={{ fontFamily: 'var(--font-agale)' }}>
                         AI Job Match
                     </h1>
                     <p className="text-white/60 max-w-2xl mx-auto">

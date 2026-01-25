@@ -38,7 +38,7 @@ export default function DashboardPage() {
     }, [fetchJobs]);
 
     return (
-        <div className="min-h-screen p-4 md:p-8 text-white pb-24 md:pb-8">
+        <div className="min-h-screen p-4 md:p-8 pt-20 md:pt-28 text-white pb-24 md:pb-8">
             <CreateJobModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
