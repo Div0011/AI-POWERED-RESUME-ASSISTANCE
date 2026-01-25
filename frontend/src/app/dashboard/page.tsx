@@ -46,16 +46,18 @@ export default function DashboardPage() {
             />
 
             <div className="max-w-6xl mx-auto">
-                <div className="flex items-center mb-12 relative h-16">
-                    <h1 className="text-4xl font-bold tracking-wide drop-shadow-md absolute left-1/2 -translate-x-1/2 w-max uppercase mt-12 md:mt-0" style={{ fontFamily: 'var(--font-agale)' }}>
-                        RECRUITER DASHBOARD
-                    </h1>
+                <div className="flex flex-col md:flex-row items-center justify-center md:justify-between mb-16 gap-6 relative">
+                    <div className="text-center md:text-center md:absolute md:left-1/2 md:-translate-x-1/2 w-full md:w-max">
+                        <h1 className="text-3xl md:text-5xl font-bold tracking-wide drop-shadow-md uppercase" style={{ fontFamily: 'var(--font-agale)' }}>
+                            RECRUITER DASHBOARD
+                        </h1>
+                    </div>
                     <button
                         onClick={() => setIsModalOpen(true)}
-                        className="ml-auto bg-white/20 backdrop-blur-md border border-white/30 text-white px-6 py-3 rounded-full flex items-center space-x-2 hover:bg-white/30 transition-all shadow-lg hover:shadow-xl hover:scale-105 group"
+                        className="md:ml-auto bg-white/20 backdrop-blur-md border border-white/30 text-white px-6 py-3 rounded-full flex items-center space-x-2 hover:bg-white/30 transition-all shadow-lg hover:shadow-xl hover:scale-105 group whitespace-nowrap md:z-10"
                     >
                         <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform" />
-                        <span className="font-semibold tracking-wide">Create New Job</span>
+                        <span className="font-semibold tracking-wide text-xs md:text-base">Create New Job</span>
                     </button>
                 </div>
 

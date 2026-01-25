@@ -24,21 +24,21 @@ export default function InboxPage() {
     return (
         <div className="min-h-screen p-4 md:p-8 pt-20 md:pt-28 text-white pb-24 md:pb-8">
             <div className="max-w-6xl mx-auto">
-                <header className="mb-12 relative h-20 flex items-center justify-center">
-                    <div className="text-center">
-                        <h1 className="text-4xl font-bold tracking-wide mb-2 drop-shadow-md" style={{ fontFamily: 'var(--font-agale)' }}>
+                <header className="mb-12 flex flex-col items-center justify-center text-center gap-6 relative">
+                    <div className="max-w-2xl">
+                        <h1 className="text-3xl md:text-5xl font-bold tracking-wide mb-4 drop-shadow-md uppercase" style={{ fontFamily: 'var(--font-agale)' }}>
                             SMART INBOX
                         </h1>
-                        <p className="text-white/60">
+                        <p className="text-white/60 text-sm md:text-base leading-relaxed">
                             Real-time email monitoring. The AI reads resumes sent to
-                            <span className="text-purple-300 font-mono bg-white/10 px-2 py-0.5 rounded mx-1">jobs@mowglai.in</span>
+                            <span className="text-purple-300 font-mono bg-white/10 px-2 py-0.5 rounded mx-1 break-all">jobs@mowglai.in</span>
                         </p>
                     </div>
                     <button
                         onClick={refreshInbox}
-                        className="absolute right-0 bg-white/10 border border-white/20 p-3 rounded-xl hover:bg-white/20 transition-all active:scale-95"
+                        className="md:absolute md:right-0 bg-white/10 border border-white/20 p-4 rounded-2xl hover:bg-white/20 transition-all active:scale-95 shadow-xl"
                     >
-                        <RefreshCw className={`w-6 h-6 ${isRefreshing ? 'animate-spin' : ''}`} />
+                        <RefreshCw className={`w-5 h-5 md:w-6 md:h-6 ${isRefreshing ? 'animate-spin' : ''}`} />
                     </button>
                 </header>
 
