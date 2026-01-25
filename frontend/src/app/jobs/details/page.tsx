@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import React, { useEffect, useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import axios from 'axios';
 import { UploadZone } from '@/components/UploadZone';
 import { motion } from 'framer-motion';
@@ -22,14 +22,15 @@ interface Candidate {
     analysis: any;
 }
 
-export default function JobDetailsPage() {
-    const { id } = useParams();
+function JobDetailsContent() {
+    const searchParams = useSearchParams();
+    const id = searchParams.get('id');
     const [job, setJob] = useState<Job | null>(null);
     const [candidates, setCandidates] = useState<Candidate[]>([]);
     const [isUploading, setIsUploading] = useState(false);
 
     useEffect(() => {
-        // Auth Bypass
+        if (!id) return;
         const fetchJob = async () => {
             try {
                 const res = await axios.get(`http://localhost:8000/jobs/${id}`, {
@@ -52,16 +53,14 @@ export default function JobDetailsPage() {
             formData.append('file', file);
             formData.append('jd_text', job?.description || '');
 
-            // Note: In a real app, we'd pass job_id to link it in DB
             try {
                 const res = await axios.post('http://localhost:8000/process-candidate/', formData, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
-                // Mocking the response to fit Candidate interface for now
                 const newCandidate: Candidate = {
                     id: Date.now(),
                     name: res.data.filename,
-                    score: 85, // Mock score
+                    score: 85,
                     confidence_score: res.data.confidence_score,
                     explanation: res.data.explanation,
                     analysis: res.data.analysis
@@ -74,69 +73,77 @@ export default function JobDetailsPage() {
         setIsUploading(false);
     };
 
-    if (!job) return <div>Loading...</div>;
+    if (!job) return <div className="p-8 text-white">Loading job details...</div>;
 
     return (
-        <div className="min-h-screen p-8 text-white">
+        <div className="min-h-screen p-4 md:p-8 text-white pb-24 md:pb-8">
             <div className="max-w-6xl mx-auto">
                 <header className="mb-14 text-center">
-                    <h1 className="text-5xl font-bold tracking-wide mb-6 drop-shadow-md border-b-2 border-white/20 pb-6 inline-block" style={{ fontFamily: 'var(--font-agale)' }}>{job.title}</h1>
-                    <p className="text-white/80 text-lg font-light leading-relaxed max-w-4xl mx-auto">{job.description}</p>
+                    <h1 className="text-4xl md:text-5xl font-bold tracking-wide mb-6 drop-shadow-md border-b-2 border-white/20 pb-6 inline-block uppercase mt-12 md:mt-0" style={{ fontFamily: 'var(--font-agale)' }}>{job.title}</h1>
+                    <p className="text-white/60 text-base md:text-lg font-light leading-relaxed max-w-4xl mx-auto">{job.description}</p>
                 </header>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <div className="lg:col-span-2">
-                        <h2 className="text-2xl font-bold mb-6 tracking-wide flex items-center gap-3" style={{ fontFamily: 'var(--font-agale)' }}>
-                            <span className="bg-white/20 p-2 rounded-lg"><FileText className="w-5 h-5" /></span>
+                        <h2 className="text-2xl font-bold mb-6 tracking-wide flex items-center gap-3 uppercase" style={{ fontFamily: 'var(--font-agale)' }}>
+                            <span className="bg-white/10 p-2 rounded-xl border border-white/10"><FileText className="w-5 h-5 text-purple-300" /></span>
                             Candidates
                         </h2>
                         <div className="space-y-4">
                             {candidates.map((c) => (
                                 <motion.div
                                     key={c.id}
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    className="bg-white/10 backdrop-blur-md p-6 rounded-2xl shadow-lg border border-white/10 hover:bg-white/15 transition-all"
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="bg-white/10 backdrop-blur-xl p-6 rounded-[2rem] shadow-2xl border border-white/20 relative overflow-hidden group"
                                 >
-                                    <div className="flex justify-between items-start mb-4">
+                                    <div className="flex justify-between items-start mb-6 relative z-10">
                                         <div className="flex items-center space-x-4">
-                                            <div className="bg-gradient-to-br from-white/20 to-white/5 p-3 rounded-xl shadow-inner border border-white/10">
-                                                <FileText className="w-6 h-6 text-white" />
+                                            <div className="bg-purple-500/20 p-3 rounded-2xl border border-purple-500/30">
+                                                <FileText className="w-6 h-6 text-purple-300" />
                                             </div>
                                             <div>
                                                 <h3 className="font-bold text-white text-lg tracking-wide">{c.name}</h3>
-                                                <p className="text-sm text-white/60">Score: <span className="text-white font-bold">{c.score}%</span></p>
+                                                <p className="text-sm font-medium text-white/50">Score: <span className="text-purple-300 font-bold">{c.score}%</span></p>
                                             </div>
                                         </div>
-                                        <div className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg border border-white/10 backdrop-blur-sm
-                                            ${c.confidence_score === 'High' ? 'bg-emerald-500/20 text-emerald-100' :
-                                                c.confidence_score === 'Medium' ? 'bg-amber-500/20 text-amber-100' :
-                                                    'bg-rose-500/20 text-rose-100'}`}>
+                                        <div className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg border
+                                            ${c.confidence_score === 'High' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' :
+                                                c.confidence_score === 'Medium' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' :
+                                                    'bg-rose-500/20 text-rose-400 border-rose-500/30'}`}>
                                             {c.confidence_score} Confidence
                                         </div>
                                     </div>
-                                    <p className="text-white/80 text-sm leading-relaxed p-4 bg-black/20 rounded-xl border border-white/5">{c.explanation}</p>
+                                    <p className="text-white/80 text-sm leading-relaxed p-5 bg-black/20 rounded-[1.5rem] border border-white/5 font-light italic relative z-10">"{c.explanation}"</p>
                                 </motion.div>
                             ))}
                             {candidates.length === 0 && (
-                                <div className="text-center py-16 bg-white/5 backdrop-blur-sm rounded-3xl border border-white/10 border-dashed">
-                                    <p className="text-white/40 text-lg">No candidates yet. Upload resumes to screen them.</p>
+                                <div className="text-center py-20 bg-white/5 backdrop-blur-sm rounded-[2.5rem] border border-white/10 border-dashed">
+                                    <p className="text-white/30 font-medium uppercase tracking-widest text-sm">No candidates yet. Upload resumes to screen.</p>
                                 </div>
                             )}
                         </div>
                     </div>
 
                     <div>
-                        <h2 className="text-2xl font-bold mb-6 tracking-wide flex items-center gap-3" style={{ fontFamily: 'var(--font-agale)' }}>
-                            <span className="bg-white/20 p-2 rounded-lg"><AlertCircle className="w-5 h-5" /></span>
-                            Upload Resumes
+                        <h2 className="text-2xl font-bold mb-6 tracking-wide flex items-center gap-3 uppercase" style={{ fontFamily: 'var(--font-agale)' }}>
+                            <span className="bg-white/10 p-2 rounded-xl border border-white/10"><AlertCircle className="w-5 h-5 text-purple-300" /></span>
+                            Screening
                         </h2>
-                        <div className="bg-white/10 backdrop-blur-md p-8 rounded-3xl shadow-xl border border-white/20 sticky top-8">
+                        <div className="bg-white/10 backdrop-blur-xl p-2 rounded-[2.5rem] shadow-2xl border border-white/20 sticky top-8">
                             <UploadZone onUpload={handleUpload} />
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function JobDetailsPage() {
+    return (
+        <Suspense fallback={<div className="p-8 text-white">Loading...</div>}>
+            <JobDetailsContent />
+        </Suspense>
     );
 }

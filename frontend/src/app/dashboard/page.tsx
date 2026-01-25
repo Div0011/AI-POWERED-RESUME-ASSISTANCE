@@ -38,7 +38,7 @@ export default function DashboardPage() {
     }, [fetchJobs]);
 
     return (
-        <div className="min-h-screen p-8 text-white">
+        <div className="min-h-screen p-4 md:p-8 text-white pb-24 md:pb-8">
             <CreateJobModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
@@ -47,7 +47,7 @@ export default function DashboardPage() {
 
             <div className="max-w-6xl mx-auto">
                 <div className="flex items-center mb-12 relative h-16">
-                    <h1 className="text-4xl font-bold tracking-wide drop-shadow-md absolute left-1/2 -translate-x-1/2 w-max" style={{ fontFamily: 'var(--font-agale)' }}>
+                    <h1 className="text-4xl font-bold tracking-wide drop-shadow-md absolute left-1/2 -translate-x-1/2 w-max uppercase mt-12 md:mt-0" style={{ fontFamily: 'var(--font-agale)' }}>
                         RECRUITER DASHBOARD
                     </h1>
                     <button
@@ -66,7 +66,7 @@ export default function DashboardPage() {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             className="bg-white/10 backdrop-blur-lg p-8 rounded-[2rem] border border-white/20 shadow-xl hover:shadow-2xl hover:bg-white/15 transition-all cursor-pointer group relative overflow-hidden"
-                            onClick={() => router.push(`/jobs/${job.id}`)}
+                            onClick={() => router.push(`/jobs/details?id=${job.id}`)}
                         >
                             <div className="absolute top-0 right-0 p-6 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <ChevronRight className="w-6 h-6 text-white" />

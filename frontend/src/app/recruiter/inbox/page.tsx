@@ -22,7 +22,7 @@ export default function InboxPage() {
     };
 
     return (
-        <div className="min-h-screen p-8 text-white">
+        <div className="min-h-screen p-4 md:p-8 text-white pb-24 md:pb-8">
             <div className="max-w-6xl mx-auto">
                 <header className="mb-12 relative h-20 flex items-center justify-center">
                     <div className="text-center">
