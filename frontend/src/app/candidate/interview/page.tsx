@@ -61,7 +61,7 @@ export default function InterviewPrepPage() {
     }, [messages]);
 
     return (
-        <div className="min-h-screen p-8 text-white flex flex-col items-center">
+        <div className="min-h-screen p-4 md:p-8 text-white flex flex-col items-center pb-24 md:pb-8">
 
             {!isStarted ? (
                 /* Welcome Screen */
@@ -69,18 +69,18 @@ export default function InterviewPrepPage() {
                     <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="bg-white/10 backdrop-blur-xl border border-white/20 p-12 rounded-[3rem] shadow-2xl max-w-2xl"
+                        className="bg-white/10 backdrop-blur-xl border border-white/20 p-8 md:p-12 rounded-[2.5rem] md:rounded-[3rem] shadow-2xl max-w-2xl"
                     >
-                        <div className="w-24 h-24 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-8 shadow-lg animate-pulse">
-                            <Bot className="w-12 h-12 text-white" />
+                        <div className="w-16 h-16 md:w-24 md:h-24 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-6 md:mb-8 shadow-lg animate-pulse">
+                            <Bot className="w-8 h-8 md:w-12 md:h-12 text-white" />
                         </div>
-                        <h1 className="text-4xl font-bold mb-6 tracking-wide" style={{ fontFamily: 'var(--font-agale)' }}>AI MOCK INTERVIEW</h1>
-                        <p className="text-white/70 text-lg mb-10 leading-relaxed">
+                        <h1 className="text-3xl md:text-4xl font-bold mb-4 md:mb-6 tracking-wide" style={{ fontFamily: 'var(--font-agale)' }}>AI MOCK INTERVIEW</h1>
+                        <p className="text-white/70 text-base md:text-lg mb-8 md:mb-10 leading-relaxed">
                             Practice real-world scenarios with our advanced AI. It will ask you tailored questions, analyze your answers, and provide feedback on your tone and content.
                         </p>
                         <Button
                             onClick={startInterview}
-                            className="text-lg px-10 py-4 shadow-xl shadow-purple-900/20"
+                            className="text-base md:text-lg px-8 md:px-10 py-3 md:py-4 shadow-xl shadow-purple-900/20"
                         >
                             Start Session
                         </Button>
@@ -91,36 +91,36 @@ export default function InterviewPrepPage() {
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="max-w-5xl w-full flex-1 flex flex-col bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2rem] shadow-2xl overflow-hidden h-[85vh]"
+                    className="max-w-5xl w-full flex-1 flex flex-col bg-white/5 backdrop-blur-xl border border-white/10 rounded-[1.5rem] md:rounded-[2rem] shadow-2xl overflow-hidden h-[80vh] md:h-[85vh]"
                 >
                     {/* Header */}
-                    <div className="h-20 border-b border-white/10 flex items-center justify-between px-8 bg-white/5">
-                        <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center border border-white/10">
-                                <Bot className="w-6 h-6 text-purple-300" />
+                    <div className="h-16 md:h-20 border-b border-white/10 flex items-center justify-between px-4 md:px-8 bg-white/5">
+                        <div className="flex items-center gap-3 md:gap-4">
+                            <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-border-white/10 flex items-center justify-center border border-white/10">
+                                <Bot className="w-5 h-5 md:w-6 md:h-6 text-purple-300" />
                             </div>
                             <div>
-                                <h2 className="font-bold text-lg">AI Interviewer</h2>
-                                <p className="text-xs text-emerald-400 flex items-center gap-1">
-                                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" /> Online
+                                <h2 className="font-bold text-sm md:text-lg">AI Interviewer</h2>
+                                <p className="text-[10px] md:text-xs text-emerald-400 flex items-center gap-1">
+                                    <span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-emerald-400 animate-pulse" /> Online
                                 </p>
                             </div>
                         </div>
-                        <div className="flex items-center gap-4">
-                            <div className="bg-black/30 px-4 py-2 rounded-full text-sm font-mono text-white/60">
+                        <div className="flex items-center gap-2 md:gap-4">
+                            <div className="bg-black/30 px-3 py-1 md:px-4 md:py-2 rounded-full text-xs md:text-sm font-mono text-white/60">
                                 00:12:45
                             </div>
                             <button
                                 onClick={() => setIsStarted(false)}
-                                className="bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 p-3 rounded-full transition-colors"
+                                className="bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 p-2 md:p-3 rounded-full transition-colors"
                             >
-                                <PhoneOff className="w-5 h-5" />
+                                <PhoneOff className="w-4 h-4 md:w-5 md:h-5" />
                             </button>
                         </div>
                     </div>
 
                     {/* Chat Area */}
-                    <div className="flex-1 overflow-y-auto p-8 space-y-6">
+                    <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-4 md:space-y-6">
                         {messages.map((msg) => (
                             <motion.div
                                 key={msg.id}
@@ -128,52 +128,48 @@ export default function InterviewPrepPage() {
                                 animate={{ opacity: 1, y: 0 }}
                                 className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                             >
-                                <div className={`max-w-[80%] rounded-2xl p-6 ${msg.role === 'user'
-                                        ? 'bg-purple-600 text-white rounded-tr-none shadow-lg'
-                                        : 'bg-white/10 border border-white/10 text-white/90 rounded-tl-none'
+                                <div className={`max-w-[90%] md:max-w-[80%] rounded-xl md:rounded-2xl p-4 md:p-6 ${msg.role === 'user'
+                                    ? 'bg-purple-600 text-white rounded-tr-none shadow-lg'
+                                    : 'bg-white/10 border border-white/10 text-white/90 rounded-tl-none'
                                     }`}>
-                                    <p className="leading-relaxed text-lg">{msg.text}</p>
+                                    <p className="leading-relaxed text-sm md:text-lg">{msg.text}</p>
                                 </div>
                             </motion.div>
                         ))}
-                        {/* Typing indicator placeholder */}
                         <div ref={messagesEndRef} />
                     </div>
 
                     {/* Input Area */}
-                    <div className="p-6 bg-white/5 border-t border-white/10">
-                        <form onSubmit={handleSendMessage} className="relative flex items-center gap-4">
+                    <div className="p-4 md:p-6 bg-white/5 border-t border-white/10">
+                        <form onSubmit={handleSendMessage} className="relative flex items-center gap-2 md:gap-4">
                             <button
                                 type="button"
                                 onClick={() => setIsListening(!isListening)}
-                                className={`p-4 rounded-full transition-all border ${isListening
-                                        ? 'bg-rose-500 text-white border-rose-400 animate-pulse'
-                                        : 'bg-white/5 text-white/60 hover:bg-white/10 border-white/10'
+                                className={`p-3 md:p-4 rounded-full transition-all border ${isListening
+                                    ? 'bg-rose-500 text-white border-rose-400 animate-pulse'
+                                    : 'bg-white/5 text-white/60 hover:bg-white/10 border-white/10'
                                     }`}
                             >
-                                {isListening ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
+                                {isListening ? <MicOff className="w-5 h-5 md:w-6 md:h-6" /> : <Mic className="w-5 h-5 md:w-6 md:h-6" />}
                             </button>
 
                             <input
                                 type="text"
                                 value={inputValue}
                                 onChange={(e) => setInputValue(e.target.value)}
-                                placeholder="Type your answer..."
-                                className="flex-1 bg-black/20 border border-white/10 rounded-full px-6 py-4 text-white placeholder-white/30 focus:outline-none focus:bg-black/30 focus:border-purple-500/50 transition-all font-sans text-lg"
+                                placeholder="Answer..."
+                                className="flex-1 bg-black/20 border border-white/10 rounded-full px-4 md:px-6 py-3 md:py-4 text-white placeholder-white/30 focus:outline-none focus:bg-black/30 focus:border-purple-500/50 transition-all font-sans text-sm md:text-lg"
                                 autoFocus
                             />
 
                             <button
                                 type="submit"
                                 disabled={!inputValue.trim()}
-                                className="p-4 bg-purple-600 hover:bg-purple-500 text-white rounded-full transition-all disabled:opacity-50 disabled:hover:bg-purple-600"
+                                className="p-3 md:p-4 bg-purple-600 hover:bg-purple-500 text-white rounded-full transition-all disabled:opacity-50"
                             >
-                                <Send className="w-6 h-6" />
+                                <Send className="w-5 h-5 md:w-6 md:h-6" />
                             </button>
                         </form>
-                        <p className="text-center text-white/30 text-xs mt-4">
-                            Pro tip: Speak clearly and use the STAR method for behavioral questions.
-                        </p>
                     </div>
 
                 </motion.div>

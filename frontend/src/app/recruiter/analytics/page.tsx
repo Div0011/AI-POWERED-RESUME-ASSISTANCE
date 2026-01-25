@@ -31,7 +31,7 @@ export default function AnalyticsPage() {
     const chartBars = [65, 45, 75, 50, 80, 60, 90, 70, 85, 95, 60, 75];
 
     return (
-        <div className="min-h-screen p-8 text-white">
+        <div className="min-h-screen p-4 md:p-8 text-white pb-24 md:pb-8">
             <div className="max-w-6xl mx-auto">
                 <header className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
                     <div>

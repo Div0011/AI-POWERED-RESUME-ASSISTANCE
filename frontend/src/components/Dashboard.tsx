@@ -53,18 +53,19 @@ export default function Dashboard() {
     };
 
     return (
-        <div className="min-h-screen bg-[#f8fafc] p-8">
-            <div className="max-w-6xl mx-auto">
+        <div className="min-h-screen p-4 md:p-8 text-white flex flex-col items-center pb-24 md:pb-8">
+            <div className="max-w-6xl w-full">
                 {/* Header */}
                 <header className="mb-12 text-center">
                     <motion.h1
                         initial={{ opacity: 0, y: -20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="text-4xl font-bold text-slate-900 mb-4"
+                        className="text-4xl md:text-5xl font-bold mb-4 uppercase mt-12 md:mt-0"
+                        style={{ fontFamily: 'var(--font-agale)' }}
                     >
                         AI Resume Screener
                     </motion.h1>
-                    <p className="text-slate-500 max-w-2xl mx-auto">
+                    <p className="text-white/60 max-w-2xl mx-auto text-sm md:text-base">
                         Upload job descriptions and resumes to get instant, AI-powered candidate ranking and reasoning.
                     </p>
                 </header>
@@ -73,27 +74,27 @@ export default function Dashboard() {
                     {/* Left Column: Input */}
                     <div className="lg:col-span-5 space-y-6">
                         <motion.div
-                            className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100"
+                            className="bg-white/10 backdrop-blur-xl rounded-[2rem] p-6 shadow-2xl border border-white/20"
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                         >
-                            <div className="flex items-center space-x-2 mb-4">
-                                <Briefcase className="w-5 h-5 text-blue-600" />
-                                <h2 className="text-lg font-semibold text-slate-800">Job Description</h2>
+                            <div className="flex items-center space-x-2 mb-6">
+                                <Briefcase className="w-5 h-5 text-purple-300" />
+                                <h2 className="text-xl font-bold tracking-wide uppercase" style={{ fontFamily: 'var(--font-agale)' }}>Job Description</h2>
                             </div>
                             <textarea
                                 value={jd}
                                 onChange={(e) => setJd(e.target.value)}
                                 placeholder="Paste the job description here..."
-                                className="w-full h-64 p-4 rounded-xl bg-slate-50 border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none resize-none text-slate-700"
+                                className="w-full h-64 md:h-80 p-5 rounded-2xl bg-black/20 border border-white/10 focus:border-purple-500/50 focus:ring-4 focus:ring-purple-500/10 transition-all outline-none resize-none text-white placeholder-white/20 text-sm md:text-base"
                             />
                             <button
                                 onClick={() => setCurrentStep('upload')}
                                 disabled={!jd}
-                                className={`mt-4 w-full py-3 rounded-xl font-medium transition-all flex items-center justify-center space-x-2
-                  ${jd ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-200' : 'bg-slate-100 text-slate-400 cursor-not-allowed'}`}
+                                className={`mt-6 w-full py-4 rounded-xl font-bold uppercase tracking-widest transition-all flex items-center justify-center space-x-2
+                  ${jd ? 'bg-purple-600 text-white hover:bg-purple-500 shadow-xl shadow-purple-900/20 active:scale-95' : 'bg-white/5 text-white/20 cursor-not-allowed'}`}
                             >
-                                <span>Next: Upload Resumes</span>
+                                <span>Parse & Upload</span>
                                 <ChevronRight className="w-4 h-4" />
                             </button>
                         </motion.div>
@@ -109,7 +110,15 @@ export default function Dashboard() {
                                     animate={{ opacity: 1, x: 0 }}
                                     exit={{ opacity: 0, x: -20 }}
                                 >
-                                    <UploadZone onUpload={handleUpload} />
+                                    <div className="bg-white/5 backdrop-blur-xl rounded-[2rem] p-1 border border-white/10 overflow-hidden">
+                                        <UploadZone onUpload={handleUpload} />
+                                    </div>
+                                    <button
+                                        onClick={() => setCurrentStep('jd')}
+                                        className="mt-4 text-white/40 hover:text-white transition-colors text-sm font-bold uppercase tracking-widest flex items-center gap-2"
+                                    >
+                                        <ChevronRight className="w-4 h-4 rotate-180" /> Edit JD
+                                    </button>
                                 </motion.div>
                             ) : currentStep === 'results' ? (
                                 <motion.div
@@ -118,98 +127,108 @@ export default function Dashboard() {
                                     animate={{ opacity: 1, x: 0 }}
                                     className="space-y-6"
                                 >
-                                    <div className="flex items-center justify-between">
-                                        <h2 className="text-xl font-bold text-slate-800">Analysis Results</h2>
+                                    <div className="flex items-center justify-between px-2">
+                                        <h2 className="text-2xl font-bold tracking-wide uppercase" style={{ fontFamily: 'var(--font-agale)' }}>Results</h2>
                                         {isProcessing && (
-                                            <div className="flex items-center space-x-2 text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
+                                            <div className="flex items-center space-x-2 text-purple-300 bg-purple-500/10 px-4 py-1.5 rounded-full border border-purple-500/20">
                                                 <Loader2 className="w-4 h-4 animate-spin" />
-                                                <span className="text-sm font-medium">Agent is thinking...</span>
+                                                <span className="text-xs font-bold uppercase tracking-tighter">AI Reasoning...</span>
                                             </div>
                                         )}
                                     </div>
 
                                     {results.length === 0 && !isProcessing && (
-                                        <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-slate-200">
-                                            <Search className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                                            <p className="text-slate-500">No candidates analyzed yet.</p>
+                                        <div className="text-center py-20 bg-white/5 rounded-[2rem] border border-dashed border-white/10 backdrop-blur-sm">
+                                            <Search className="w-12 h-12 text-white/20 mx-auto mb-4" />
+                                            <p className="text-white/40 font-medium">No candidates analyzed yet.</p>
                                         </div>
                                     )}
 
-                                    <div className="space-y-4">
+                                    <div className="space-y-6">
                                         {results.map((res, i) => (
                                             <motion.div
                                                 key={i}
                                                 initial={{ opacity: 0, y: 20 }}
                                                 animate={{ opacity: 1, y: 0 }}
-                                                className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100"
+                                                className="bg-white/10 backdrop-blur-xl rounded-[2rem] p-6 md:p-8 shadow-2xl border border-white/20 relative overflow-hidden group"
                                             >
-                                                <div className="flex justify-between items-start mb-4">
-                                                    <div className="flex items-center space-x-3">
-                                                        <div className="bg-blue-50 p-2 rounded-lg">
-                                                            <FileText className="w-5 h-5 text-blue-600" />
+                                                <div className="absolute top-0 right-0 p-32 bg-purple-500/5 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-purple-500/10 transition-colors" />
+
+                                                <div className="flex flex-col md:flex-row justify-between items-start gap-4 md:items-center mb-8 relative z-10">
+                                                    <div className="flex items-center space-x-4">
+                                                        <div className="bg-purple-500/20 p-3 rounded-2xl border border-purple-500/30">
+                                                            <FileText className="w-6 h-6 text-purple-300" />
                                                         </div>
                                                         <div>
-                                                            <h3 className="font-bold text-slate-800">{res.filename}</h3>
-                                                            <p className="text-sm text-slate-500">{res.analysis.years_of_experience} Experience</p>
+                                                            <h3 className="font-bold text-xl text-white tracking-wide">{res.filename}</h3>
+                                                            <p className="text-sm font-medium text-white/50 bg-white/5 px-2 py-0.5 rounded-md inline-block mt-1">
+                                                                {res.analysis.years_of_experience} Experience
+                                                            </p>
                                                         </div>
                                                     </div>
-                                                    <div className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider
-                            ${res.confidence_score === 'High' ? 'bg-emerald-50 text-emerald-600' :
-                                                            res.confidence_score === 'Medium' ? 'bg-amber-50 text-amber-600' :
-                                                                'bg-rose-50 text-rose-600'}`}>
+                                                    <div className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-[0.1em] shadow-lg
+                                                        ${res.confidence_score === 'High' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+                                                            res.confidence_score === 'Medium' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
+                                                                'bg-rose-500/20 text-rose-400 border border-rose-500/30'}`}>
                                                         {res.confidence_score} Confidence
                                                     </div>
                                                 </div>
 
-                                                <div className="grid grid-cols-2 gap-4 mb-4">
-                                                    <div className="bg-slate-50 p-3 rounded-xl">
-                                                        <p className="text-xs font-bold text-slate-400 uppercase mb-2">Matching Skills</p>
-                                                        <div className="flex flex-wrap gap-1">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 relative z-10">
+                                                    <div className="bg-black/20 p-4 rounded-3xl border border-white/5">
+                                                        <p className="text-[10px] font-black text-purple-300 uppercase tracking-widest mb-3 opacity-60">Matching Skills</p>
+                                                        <div className="flex flex-wrap gap-2">
                                                             {res.analysis.matching_skills.map(s => (
-                                                                <span key={s} className="text-xs bg-white border border-slate-200 px-2 py-0.5 rounded-md text-slate-600">{s}</span>
+                                                                <span key={s} className="text-xs font-semibold bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full text-emerald-300/90">{s}</span>
                                                             ))}
                                                         </div>
                                                     </div>
-                                                    <div className="bg-slate-50 p-3 rounded-xl">
-                                                        <p className="text-xs font-bold text-slate-400 uppercase mb-2">Missing Skills</p>
-                                                        <div className="flex flex-wrap gap-1">
+                                                    <div className="bg-black/20 p-4 rounded-3xl border border-white/5">
+                                                        <p className="text-[10px] font-black text-rose-300 uppercase tracking-widest mb-3 opacity-60">Missing Skills</p>
+                                                        <div className="flex flex-wrap gap-2">
                                                             {res.analysis.missing_skills.map(s => (
-                                                                <span key={s} className="text-xs bg-white border border-slate-200 px-2 py-0.5 rounded-md text-slate-600">{s}</span>
+                                                                <span key={s} className="text-xs font-semibold bg-rose-500/10 border border-rose-500/20 px-3 py-1 rounded-full text-rose-300/90">{s}</span>
                                                             ))}
                                                         </div>
                                                     </div>
                                                 </div>
 
-                                                <div className="bg-slate-50 p-4 rounded-xl mb-4">
-                                                    <div className="flex items-center space-x-2 mb-2">
-                                                        <Search className="w-4 h-4 text-blue-500" />
-                                                        <p className="text-sm font-bold text-slate-700">Live Reasoning (Chain of Thought)</p>
+                                                <div className="bg-black/20 p-5 rounded-3xl mb-6 border border-white/5 relative z-10">
+                                                    <div className="flex items-center space-x-2 mb-4">
+                                                        <Search className="w-4 h-4 text-purple-400" />
+                                                        <p className="text-xs font-bold text-white/70 uppercase tracking-widest">Live Reasoning (CoT)</p>
                                                     </div>
-                                                    <div className="space-y-1">
+                                                    <div className="space-y-2 max-h-32 overflow-y-auto pr-2 custom-scrollbar">
                                                         {res.logs.map((log, index) => (
-                                                            <p key={index} className="text-xs text-slate-500 font-mono">
+                                                            <p key={index} className="text-xs text-white/40 font-mono leading-relaxed bg-white/5 p-2 rounded-lg border border-white/5">
                                                                 {log}
                                                             </p>
                                                         ))}
                                                     </div>
                                                 </div>
 
-                                                <div className="bg-slate-50 p-4 rounded-xl">
-                                                    <div className="flex items-center space-x-2 mb-2">
-                                                        {res.confidence_score === 'Low' ? <AlertCircle className="w-4 h-4 text-rose-500" /> : <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
-                                                        <p className="text-sm font-bold text-slate-700">Final Verdict</p>
+                                                <div className="bg-gradient-to-br from-white/10 to-transparent p-6 rounded-3xl border border-white/10 relative z-10 shadow-inner">
+                                                    <div className="flex items-center space-x-2 mb-3">
+                                                        {res.confidence_score === 'Low' ? <AlertCircle className="w-5 h-5 text-rose-400" /> : <CheckCircle2 className="w-5 h-5 text-emerald-400" />}
+                                                        <p className="text-sm font-black text-white uppercase tracking-widest">Final Verdict</p>
                                                     </div>
-                                                    <p className="text-sm text-slate-600 leading-relaxed">
-                                                        {res.explanation}
+                                                    <p className="text-sm md:text-base text-white/80 leading-relaxed font-light italic">
+                                                        "{res.explanation}"
                                                     </p>
                                                 </div>
                                             </motion.div>
                                         ))}
                                     </div>
+                                    <button
+                                        onClick={() => { setResults([]); setCurrentStep('jd'); }}
+                                        className="w-full py-4 text-white/40 hover:text-white transition-colors text-xs font-bold uppercase tracking-widest underline underline-offset-4"
+                                    >
+                                        Reset Session
+                                    </button>
                                 </motion.div>
                             ) : (
-                                <div className="flex flex-col items-center justify-center h-full text-slate-400">
-                                    <p>Please complete the Job Description first.</p>
+                                <div className="flex flex-col items-center justify-center h-full text-white/20">
+                                    <p className="font-bold uppercase tracking-widest">Awaiting Job Description</p>
                                 </div>
                             )}
                         </AnimatePresence>
