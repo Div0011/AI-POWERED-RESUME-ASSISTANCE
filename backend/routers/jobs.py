@@ -3,6 +3,10 @@ from sqlalchemy.orm import Session
 from typing import List
 import models, schemas, auth, database
 
+from services.analyzer import RequirementAnalyzer
+from services.embedding import EmbeddingService
+import worker
+
 router = APIRouter()
 
 @router.post("/", response_model=schemas.JobResponse)
@@ -11,20 +15,33 @@ def create_job(
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(auth.RoleChecker("recruiter"))
 ):
+    # 1. Extract structured requirements using Gemini
+    analyzer = RequirementAnalyzer()
+    extracted_reqs = analyzer.extract_requirements(job.description)
     
-    # Basic skill extraction from description (placeholder for LLM extraction)
-    # In a real app, we'd use the Agent here too.
-    extracted_skills = [word for word in job.description.split() if len(word) > 4] # Dummy logic
+    # 2. Generate embedding for the job description
+    embedder = EmbeddingService()
+    job_vec = embedder.get_embedding(job.description)
     
+    # 3. Save Job to DB
     new_job = models.Job(
         title=job.title,
         description=job.description,
-        required_skills=extracted_skills,
-        owner_id=current_user.id
+        required_skills=extracted_reqs.must_have_skills,
+        owner_id=current_user.id,
+        embedding=job_vec
     )
     db.add(new_job)
     db.commit()
     db.refresh(new_job)
+
+    # 4. Trigger Background Matcher (Celery)
+    try:
+        worker.match_existing_candidates_to_new_job.delay(new_job.id)
+    except Exception as e:
+        # Don't fail the request if Celery/Redis is down
+        print(f"Celery mismatch trigger failed: {e}")
+
     return new_job
 
 @router.get("/", response_model=List[schemas.JobResponse])

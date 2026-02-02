@@ -91,13 +91,13 @@ def vector_search_candidates(req: schemas.VectorSearchRequest, db: Session = Dep
         
         results = []
         for cand, job_title in candidates:
-            if not cand.resume_embedding:
+            if not cand.embedding:
                 continue
                 
             # Parse embedding from JSON string if needed (SQLite compatibility)
             try:
                 # SQLite stores JSON as string, but maybe it's already a list if using a custom type
-                cand_vec = json.loads(cand.resume_embedding) if isinstance(cand.resume_embedding, str) else cand.resume_embedding
+                cand_vec = json.loads(cand.embedding) if isinstance(cand.embedding, str) else cand.embedding
                 
                 # Cosine Similarity
                 dot_product = np.dot(query_vec, cand_vec)
