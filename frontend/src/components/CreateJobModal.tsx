@@ -55,55 +55,56 @@ export const CreateJobModal: React.FC<CreateJobModalProps> = ({ isOpen, onClose,
 
                     {/* Modal */}
                     <motion.div
-                        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                        exit={{ opacity: 0, scale: 0.95, y: 20 }}
                         className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none"
                     >
-                        <div className="bg-white/10 backdrop-blur-xl border border-white/20 p-8 rounded-3xl shadow-2xl w-full max-w-lg pointer-events-auto relative overflow-hidden">
-                            {/* Decorative gradients */}
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/20 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
-                            <div className="absolute bottom-0 left-0 w-32 h-32 bg-pink-500/20 rounded-full blur-3xl -ml-16 -mb-16 pointer-events-none"></div>
+                        <div className="bg-[var(--card-bg)] border border-[var(--card-border)] p-8 rounded-2xl shadow-2xl w-full max-w-lg pointer-events-auto relative overflow-hidden">
+                            {/* Detailed Tech Header Line */}
+                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[var(--primary)] via-[var(--accent)] to-[var(--primary)] opacity-50" />
 
                             <button
                                 onClick={onClose}
-                                className="absolute top-4 right-4 text-white/50 hover:text-white transition-colors"
+                                className="absolute top-4 right-4 text-[var(--foreground)]/50 hover:text-[var(--foreground)] transition-colors"
                             >
-                                <X className="w-6 h-6" />
+                                <X className="w-5 h-5" />
                             </button>
 
-                            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2" style={{ fontFamily: 'var(--font-agale)' }}>
-                                <Sparkles className="w-6 h-6 text-purple-300" />
+                            <h2 className="text-xl font-bold text-[var(--foreground)] mb-6 flex items-center gap-3 tracking-tight">
+                                <span className="bg-[var(--primary)]/10 p-2 rounded-lg text-[var(--primary)] border border-[var(--primary)]/20">
+                                    <Sparkles className="w-5 h-5" />
+                                </span>
                                 Post New Job
                             </h2>
 
                             <form onSubmit={handleSubmit} className="space-y-6">
                                 <div>
-                                    <label className="block text-xs font-bold text-white/80 uppercase tracking-wider mb-2">Job Title</label>
+                                    <label className="block text-xs font-semibold text-[var(--foreground)]/70 uppercase tracking-widest mb-2 ml-1">Job Title</label>
                                     <input
                                         type="text"
                                         value={title}
                                         onChange={(e) => setTitle(e.target.value)}
-                                        className="w-full px-4 py-3 rounded-xl bg-black/20 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:bg-black/30 focus:border-white/40 focus:ring-1 focus:ring-white/20 transition-all font-sans"
+                                        className="w-full px-4 py-3 rounded-xl bg-[var(--slate-950)] border border-[var(--card-border)] text-[var(--foreground)] placeholder-[var(--foreground)]/20 focus:outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]/30 transition-all font-sans text-sm"
                                         placeholder="e.g. Senior Frontend Developer"
                                         required
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-bold text-white/80 uppercase tracking-wider mb-2">Job Description</label>
+                                    <label className="block text-xs font-semibold text-[var(--foreground)]/70 uppercase tracking-widest mb-2 ml-1">Job Description</label>
                                     <textarea
                                         value={description}
                                         onChange={(e) => setDescription(e.target.value)}
                                         rows={5}
-                                        className="w-full px-4 py-3 rounded-xl bg-black/20 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:bg-black/30 focus:border-white/40 focus:ring-1 focus:ring-white/20 transition-all font-sans resize-none"
+                                        className="w-full px-4 py-3 rounded-xl bg-[var(--slate-950)] border border-[var(--card-border)] text-[var(--foreground)] placeholder-[var(--foreground)]/20 focus:outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]/30 transition-all font-sans text-sm resize-none"
                                         placeholder="Paste the JD here..."
                                         required
                                     />
                                 </div>
 
                                 <Button type="submit" disabled={isLoading} fullWidth>
-                                    {isLoading ? <Loader2 className="w-5 h-5 animate-spin text-purple-600" /> : 'CREATE JOB POSTING'}
+                                    {isLoading ? <Loader2 className="w-5 h-5 animate-spin text-white" /> : 'Create Job Listing'}
                                 </Button>
                             </form>
                         </div>

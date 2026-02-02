@@ -1,7 +1,16 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, Text, JSON, Float
 from sqlalchemy.orm import relationship
-from database import Base
-from pgvector.sqlalchemy import Vector
+from database import Base, DATABASE_URL
+
+# SQLite compatibility for pgvector
+if "sqlite" in DATABASE_URL:
+    # Use a dummy class that accepts arguments but behaves like JSON
+    class SQLiteVector(JSON):
+        def __init__(self, *args, **kwargs):
+            super().__init__()
+    Vector = SQLiteVector
+else:
+    from pgvector.sqlalchemy import Vector
 
 class User(Base):
     __tablename__ = "users"
@@ -54,3 +63,14 @@ class Feedback(Base):
     comment = Column(Text)
     
     candidate = relationship("Candidate", back_populates="feedback")
+
+class Simulation(Base):
+    __tablename__ = "simulations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    resume_text = Column(Text)
+    job_id = Column(Integer, ForeignKey("jobs.id"))
+    score = Column(Float)
+    analysis = Column(JSON) # JSON results (missing skills, etc.)
+    student_reasoning = Column(Text) # "Student-friendly" AI reasoning
+    created_at = Column(String) # Timestamp

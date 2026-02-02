@@ -24,3 +24,8 @@ prometheus-fastapi-instrumentator
 sentry-sdk
 pgvector
 pyyaml
+google-api-python-client
+google-auth-oauthlib
+google-auth-httplib2
+mail-parser
+beautifulsoup4

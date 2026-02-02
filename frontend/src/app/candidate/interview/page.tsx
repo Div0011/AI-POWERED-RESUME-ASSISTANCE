@@ -1,179 +1,245 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mic, MicOff, Video, PhoneOff, Send, User, Bot, Sparkles, StopCircle } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+import { Mic, MicOff, Send, MessageSquare, Terminal, ChevronRight, User, Sparkles, Loader2, PlayCircle, StopCircle, ClipboardList } from 'lucide-react';
+import axios from 'axios';
+import { API_BASE } from '@/config';
 
 interface Message {
-    id: number;
-    role: 'user' | 'assistant';
-    text: string;
+    role: 'interviewer' | 'candidate';
+    content: string;
 }
 
-export default function InterviewPrepPage() {
-    const [isStarted, setIsStarted] = useState(false);
+export default function InterviewPage() {
     const [messages, setMessages] = useState<Message[]>([]);
-    const [inputValue, setInputValue] = useState("");
-    const [isListening, setIsListening] = useState(false);
-    const messagesEndRef = useRef<HTMLDivElement>(null);
+    const [userInput, setUserInput] = useState("");
+    const [isThinking, setIsThinking] = useState(false);
+    const [isInterviewStarted, setIsInterviewStarted] = useState(false);
+    const [isVoiceActive, setIsVoiceActive] = useState(false);
+    const [feedback, setFeedback] = useState<string | null>(null);
+    const chatEndRef = useRef<HTMLDivElement>(null);
 
-    const startInterview = () => {
-        setIsStarted(true);
-        // Initial greeting
-        setMessages([
-            { id: 1, role: 'assistant', text: "Hello! I'm your AI Interviewer today. I've reviewed your profile. Let's start with a classic: Tell me about a time you faced a significant technical challenge and how you solved it." }
-        ]);
+    // Speech Recognition
+    const [recognition, setRecognition] = useState<any>(null);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined' && ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+            const SpeechRec = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+            const rec = new SpeechRec();
+            rec.continuous = true;
+            rec.interimResults = true;
+            rec.onresult = (event: any) => {
+                const transcript = Array.from(event.results)
+                    .map((result: any) => result[0])
+                    .map((result: any) => result.transcript)
+                    .join('');
+                setUserInput(transcript);
+            };
+            setRecognition(rec);
+        }
+    }, []);
+
+    const toggleVoice = () => {
+        if (isVoiceActive) {
+            recognition?.stop();
+            setIsVoiceActive(false);
+        } else {
+            recognition?.start();
+            setIsVoiceActive(true);
+        }
     };
 
-    const handleSendMessage = (e?: React.FormEvent) => {
-        e?.preventDefault();
-        if (!inputValue.trim()) return;
-
-        const newUserMsg: Message = { id: Date.now(), role: 'user', text: inputValue };
-        setMessages(prev => [...prev, newUserMsg]);
-        setInputValue("");
-
-        // Simulate AI thinking and response
-        setTimeout(() => {
-            const responses = [
-                "That's a great example. Can you elaborate on the specific technologies you used?",
-                "Interesting approach. How did you handle the communication with stakeholders during that time?",
-                "Good. Now, looking back, what would you have done differently?",
-                "I see. Let's pivot a bit. How do you stay updated with the latest frontend trends?"
-            ];
-            const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-
-            setMessages(prev => [...prev, {
-                id: Date.now() + 1,
-                role: 'assistant',
-                text: randomResponse
-            }]);
-        }, 1500);
+    const speak = (text: string) => {
+        if (!isVoiceActive) return;
+        const utterance = new SpeechSynthesisUtterance(text);
+        window.speechSynthesis.speak(utterance);
     };
 
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    const startInterview = async () => {
+        setIsThinking(true);
+        try {
+            const res = await axios.post(`${API_BASE}/interview/start`, {
+                job_id: 1,
+                resume_text: "Experience in Cyber Security, Python, Nmap, worked on vulnerability assessment."
+            });
+            const firstQuestion = res.data.next_question;
+            setMessages([{ role: 'interviewer', content: firstQuestion }]);
+            setIsInterviewStarted(true);
+            speak(firstQuestion);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setIsThinking(false);
+        }
+    };
+
+    const handleSend = async () => {
+        if (!userInput.trim()) return;
+
+        const newMessages: Message[] = [...messages, { role: 'candidate', content: userInput }];
+        setMessages(newMessages);
+        setUserInput("");
+        setIsThinking(true);
+
+        try {
+            const res = await axios.post(`${API_BASE}/interview/respond`, {
+                job_id: 1,
+                resume_text: "Experience in Cyber Security, Python, Nmap, worked on vulnerability assessment.",
+                history: newMessages
+            });
+            const nextQ = res.data.next_question;
+            setMessages(prev => [...prev, { role: 'interviewer', content: nextQ }]);
+            speak(nextQ);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setIsThinking(false);
+        }
+    };
+
+    const endInterview = async () => {
+        setIsThinking(true);
+        try {
+            const res = await axios.post(`${API_BASE}/interview/feedback`, {
+                job_id: 1,
+                history: messages
+            });
+            setFeedback(res.data.feedback);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setIsThinking(false);
+        }
     };
 
     useEffect(() => {
-        scrollToBottom();
-    }, [messages]);
+        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [messages, isThinking]);
 
     return (
-        <div className="min-h-screen p-4 md:p-8 pt-20 md:pt-28 text-white flex flex-col items-center pb-24 md:pb-8">
-
-            {!isStarted ? (
-                /* Welcome Screen */
-                <div className="max-w-4xl w-full flex-1 flex flex-col items-center justify-center text-center">
+        <div className="min-h-screen bg-[#050505] text-white p-6 pt-24 font-sans flex flex-col items-center">
+            <div className="w-full max-w-3xl">
+                {!isInterviewStarted ? (
                     <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="bg-white/10 backdrop-blur-xl border border-white/20 p-8 md:p-12 rounded-[2.5rem] md:rounded-[3rem] shadow-2xl max-w-2xl"
+                        className="bg-white/[0.03] border border-white/10 p-12 rounded-[2.5rem] text-center"
                     >
-                        <div className="w-16 h-16 md:w-24 md:h-24 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-6 md:mb-8 shadow-lg animate-pulse">
-                            <Bot className="w-8 h-8 md:w-12 md:h-12 text-white" />
+                        <div className="p-5 bg-purple-500/10 rounded-2xl w-fit mx-auto mb-8 border border-purple-500/20">
+                            <Sparkles className="w-10 h-10 text-purple-400" />
                         </div>
-                        <h1 className="text-3xl md:text-4xl font-bold mb-4 md:mb-6 tracking-wide" style={{ fontFamily: 'var(--font-agale)' }}>AI MOCK INTERVIEW</h1>
-                        <p className="text-white/70 text-base md:text-lg mb-8 md:mb-10 leading-relaxed">
-                            Practice real-world scenarios with our advanced AI. It will ask you tailored questions, analyze your answers, and provide feedback on your tone and content.
+                        <h1 className="text-4xl font-black mb-4 tracking-tighter">Ready for your interview?</h1>
+                        <p className="text-white/40 mb-10 max-w-md mx-auto font-medium">
+                            Step into a technical sandbox. Our AI interviewer will challenge you based on your resume and the Job Description.
                         </p>
-                        <Button
+                        <button
                             onClick={startInterview}
-                            className="text-base md:text-lg px-8 md:px-10 py-3 md:py-4 shadow-xl shadow-purple-900/20"
+                            className="px-10 py-5 bg-white text-black font-black rounded-2xl hover:bg-white/90 transition-all active:scale-95 flex items-center gap-3 mx-auto"
                         >
                             Start Session
-                        </Button>
+                            <ChevronRight className="w-5 h-5" />
+                        </button>
                     </motion.div>
-                </div>
-            ) : (
-                /* Interview Interface */
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="max-w-5xl w-full flex-1 flex flex-col bg-white/5 backdrop-blur-xl border border-white/10 rounded-[1.5rem] md:rounded-[2rem] shadow-2xl overflow-hidden h-[80vh] md:h-[85vh]"
-                >
-                    {/* Header */}
-                    <div className="h-16 md:h-20 border-b border-white/10 flex items-center justify-between px-4 md:px-8 bg-white/5">
-                        <div className="flex items-center gap-3 md:gap-4">
-                            <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-border-white/10 flex items-center justify-center border border-white/10">
-                                <Bot className="w-5 h-5 md:w-6 md:h-6 text-purple-300" />
+                ) : feedback ? (
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="bg-white/[0.03] border border-white/10 p-12 rounded-[2.5rem]"
+                    >
+                        <div className="flex items-center gap-4 mb-8">
+                            <div className="p-3 bg-emerald-500/10 rounded-xl">
+                                <ClipboardList className="w-6 h-6 text-emerald-400" />
                             </div>
-                            <div>
-                                <h2 className="font-bold text-sm md:text-lg">AI Interviewer</h2>
-                                <p className="text-[10px] md:text-xs text-emerald-400 flex items-center gap-1">
-                                    <span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-emerald-400 animate-pulse" /> Online
-                                </p>
-                            </div>
+                            <h2 className="text-2xl font-black">Performance Report</h2>
                         </div>
-                        <div className="flex items-center gap-2 md:gap-4">
-                            <div className="bg-black/30 px-3 py-1 md:px-4 md:py-2 rounded-full text-xs md:text-sm font-mono text-white/60">
-                                00:12:45
-                            </div>
-                            <button
-                                onClick={() => setIsStarted(false)}
-                                className="bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 p-2 md:p-3 rounded-full transition-colors"
-                            >
-                                <PhoneOff className="w-4 h-4 md:w-5 md:h-5" />
-                            </button>
+                        <div className="space-y-6 text-white/70 font-medium whitespace-pre-wrap leading-relaxed bg-black/40 p-8 rounded-2xl border border-white/5">
+                            {feedback}
                         </div>
-                    </div>
-
-                    {/* Chat Area */}
-                    <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-4 md:space-y-6">
-                        {messages.map((msg) => (
-                            <motion.div
-                                key={msg.id}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                            >
-                                <div className={`max-w-[90%] md:max-w-[80%] rounded-xl md:rounded-2xl p-4 md:p-6 ${msg.role === 'user'
-                                    ? 'bg-purple-600 text-white rounded-tr-none shadow-lg'
-                                    : 'bg-white/10 border border-white/10 text-white/90 rounded-tl-none'
-                                    }`}>
-                                    <p className="leading-relaxed text-sm md:text-lg">{msg.text}</p>
+                        <button
+                            onClick={() => window.location.reload()}
+                            className="mt-10 px-8 py-4 bg-white/5 border border-white/10 rounded-2xl font-bold hover:bg-white/10 transition-all"
+                        >
+                            Retry Interview
+                        </button>
+                    </motion.div>
+                ) : (
+                    <div className="space-y-6">
+                        {/* Chat Window */}
+                        <div className="h-[60vh] overflow-y-auto mb-8 space-y-6 pr-4 scrollbar-hide">
+                            <AnimatePresence>
+                                {messages.map((m, i) => (
+                                    <motion.div
+                                        key={i}
+                                        initial={{ opacity: 0, x: m.role === 'interviewer' ? -20 : 20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        className={`flex ${m.role === 'interviewer' ? 'justify-start' : 'justify-end'}`}
+                                    >
+                                        <div className={`max-w-[80%] p-6 rounded-[2rem] flex gap-4 ${m.role === 'interviewer'
+                                            ? 'bg-white/[0.03] border border-white/10 rounded-tl-none'
+                                            : 'bg-purple-600 text-white rounded-tr-none'
+                                            }`}>
+                                            <div className={`mt-1 flex-shrink-0 ${m.role === 'interviewer' ? 'text-purple-400' : 'text-white/50'}`}>
+                                                {m.role === 'interviewer' ? <Terminal className="w-5 h-5" /> : <User className="w-5 h-5" />}
+                                            </div>
+                                            <p className="text-sm font-medium leading-relaxed">{m.content}</p>
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </AnimatePresence>
+                            {isThinking && (
+                                <div className="flex justify-start">
+                                    <div className="bg-white/[0.03] border border-white/10 p-6 rounded-[2rem] rounded-tl-none">
+                                        <Loader2 className="w-5 h-5 text-purple-400 animate-spin" />
+                                    </div>
                                 </div>
-                            </motion.div>
-                        ))}
-                        <div ref={messagesEndRef} />
+                            )}
+                            <div ref={chatEndRef} />
+                        </div>
+
+                        {/* Controls */}
+                        <div className="space-y-4">
+                            <div className="relative group">
+                                <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-600 rounded-3xl blur opacity-20 group-focus-within:opacity-40 transition duration-500"></div>
+                                <div className="relative bg-white/[0.03] border border-white/10 rounded-3xl flex items-center p-3 gap-3">
+                                    <button
+                                        onClick={toggleVoice}
+                                        className={`p-4 rounded-2xl transition-all ${isVoiceActive ? 'bg-red-500 text-white' : 'bg-white/5 text-white/50 hover:text-white'}`}
+                                    >
+                                        {isVoiceActive ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
+                                    </button>
+                                    <input
+                                        type="text"
+                                        placeholder={isVoiceActive ? "Listening (speaking your transcript)..." : "Type your answer..."}
+                                        value={userInput}
+                                        onChange={(e) => setUserInput(e.target.value)}
+                                        onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                                        className="flex-1 bg-transparent border-none outline-none font-medium text-sm px-2"
+                                    />
+                                    <button
+                                        onClick={handleSend}
+                                        disabled={!userInput.trim() || isThinking}
+                                        className="p-4 bg-white text-black rounded-2xl hover:bg-white/90 transition-all disabled:opacity-50"
+                                    >
+                                        <Send className="w-6 h-6" />
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="flex justify-between items-center px-4">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-white/20">
+                                    {isVoiceActive ? "Voice Mode: Active" : "Text Mode: Active"}
+                                </p>
+                                <button
+                                    onClick={endInterview}
+                                    className="text-[10px] font-black uppercase tracking-widest text-rose-500 hover:text-rose-400 transition-colors"
+                                >
+                                    End & Get Feedback
+                                </button>
+                            </div>
+                        </div>
                     </div>
-
-                    {/* Input Area */}
-                    <div className="p-4 md:p-6 bg-white/5 border-t border-white/10">
-                        <form onSubmit={handleSendMessage} className="relative flex items-center gap-2 md:gap-4">
-                            <button
-                                type="button"
-                                onClick={() => setIsListening(!isListening)}
-                                className={`p-3 md:p-4 rounded-full transition-all border ${isListening
-                                    ? 'bg-rose-500 text-white border-rose-400 animate-pulse'
-                                    : 'bg-white/5 text-white/60 hover:bg-white/10 border-white/10'
-                                    }`}
-                            >
-                                {isListening ? <MicOff className="w-5 h-5 md:w-6 md:h-6" /> : <Mic className="w-5 h-5 md:w-6 md:h-6" />}
-                            </button>
-
-                            <input
-                                type="text"
-                                value={inputValue}
-                                onChange={(e) => setInputValue(e.target.value)}
-                                placeholder="Answer..."
-                                className="flex-1 bg-black/20 border border-white/10 rounded-full px-4 md:px-6 py-3 md:py-4 text-white placeholder-white/30 focus:outline-none focus:bg-black/30 focus:border-purple-500/50 transition-all font-sans text-sm md:text-lg"
-                                autoFocus
-                            />
-
-                            <button
-                                type="submit"
-                                disabled={!inputValue.trim()}
-                                className="p-3 md:p-4 bg-purple-600 hover:bg-purple-500 text-white rounded-full transition-all disabled:opacity-50"
-                            >
-                                <Send className="w-5 h-5 md:w-6 md:h-6" />
-                            </button>
-                        </form>
-                    </div>
-
-                </motion.div>
-            )}
+                )}
+            </div>
         </div>
     );
 }

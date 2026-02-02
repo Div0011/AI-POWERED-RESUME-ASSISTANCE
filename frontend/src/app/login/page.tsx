@@ -64,29 +64,29 @@ export default function AuthPage() {
 
     return (
         <div className="min-h-screen flex items-center justify-center p-4">
-            <div className="bg-white/10 backdrop-blur-xl border border-white/20 p-8 rounded-3xl shadow-2xl w-full max-w-md relative overflow-hidden">
+            <div className="bg-[var(--card-bg)] border border-[var(--card-border)] p-8 rounded-2xl shadow-2xl w-full max-w-md relative overflow-hidden">
                 {/* Decorative glow */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-2 bg-gradient-to-r from-transparent via-white/50 to-transparent blur-sm"></div>
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-1 bg-gradient-to-r from-transparent via-[var(--primary)] to-transparent blur-sm"></div>
 
                 <div className="text-center mb-10">
-                    <h1 className="text-3xl font-bold text-white mb-2 tracking-wide font-agale">
-                        {isLogin ? 'WELCOME BACK' : 'JOIN US'}
+                    <h1 className="text-2xl font-bold text-[var(--foreground)] mb-2 tracking-wide font-agale uppercase">
+                        {isLogin ? 'Welcome Back' : 'Join Us'}
                     </h1>
-                    <p className="text-white/60 text-sm font-light tracking-wider">
+                    <p className="text-[var(--foreground)]/60 text-sm font-light tracking-wide">
                         {isLogin ? 'Access your AI recruiting portal' : 'Start your journey with us'}
                     </p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div>
-                        <label className="block text-xs font-semibold text-white/80 uppercase tracking-wider mb-2">Email Address</label>
+                        <label className="block text-xs font-semibold text-[var(--foreground)]/70 uppercase tracking-widest mb-2 ml-1">Email Address</label>
                         <div className="relative group">
-                            <Mail className="absolute left-4 top-3.5 w-5 h-5 text-white/50 group-focus-within:text-white transition-colors" />
+                            <Mail className="absolute left-4 top-3.5 w-5 h-5 text-[var(--foreground)]/40 group-focus-within:text-[var(--primary)] transition-colors" />
                             <input
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="w-full pl-12 pr-4 py-3 rounded-xl bg-black/20 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:bg-black/30 focus:border-white/30 focus:ring-1 focus:ring-white/20 transition-all font-sans"
+                                className="w-full pl-12 pr-4 py-3 rounded-xl bg-[var(--slate-950)] border border-[var(--card-border)] text-[var(--foreground)] placeholder-[var(--foreground)]/20 focus:outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]/30 transition-all font-sans text-sm"
                                 placeholder="admin@123.login"
                                 required
                             />
@@ -94,14 +94,14 @@ export default function AuthPage() {
                     </div>
 
                     <div>
-                        <label className="block text-xs font-semibold text-white/80 uppercase tracking-wider mb-2">Password</label>
+                        <label className="block text-xs font-semibold text-[var(--foreground)]/70 uppercase tracking-widest mb-2 ml-1">Password</label>
                         <div className="relative group">
-                            <Lock className="absolute left-4 top-3.5 w-5 h-5 text-white/50 group-focus-within:text-white transition-colors" />
+                            <Lock className="absolute left-4 top-3.5 w-5 h-5 text-[var(--foreground)]/40 group-focus-within:text-[var(--primary)] transition-colors" />
                             <input
                                 type="password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="w-full pl-12 pr-4 py-3 rounded-xl bg-black/20 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:bg-black/30 focus:border-white/30 focus:ring-1 focus:ring-white/20 transition-all font-sans"
+                                className="w-full pl-12 pr-4 py-3 rounded-xl bg-[var(--slate-950)] border border-[var(--card-border)] text-[var(--foreground)] placeholder-[var(--foreground)]/20 focus:outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]/30 transition-all font-sans text-sm"
                                 placeholder="••••••••"
                                 required
                             />
@@ -109,7 +109,7 @@ export default function AuthPage() {
                     </div>
 
                     <Button type="submit" disabled={isLoading} fullWidth>
-                        {isLoading ? <Loader2 className="w-5 h-5 animate-spin text-purple-600" /> : (isLogin ? 'SIGN IN' : 'CREATE ACCOUNT')}
+                        {isLoading ? <Loader2 className="w-5 h-5 animate-spin text-white" /> : (isLogin ? 'SIGN IN' : 'CREATE ACCOUNT')}
                     </Button>
                 </form>
 

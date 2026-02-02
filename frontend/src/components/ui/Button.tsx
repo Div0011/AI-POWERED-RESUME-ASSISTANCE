@@ -39,17 +39,17 @@ export const Button = ({
         <button
             className={cn(
                 baseStyles,
-                variant === 'primary' ? primaryStyle : variants[variant],
+                // "Cyber-Professional" Variant Styles
+                variant === 'primary' && "bg-[var(--primary)] text-white hover:bg-blue-600 shadow-lg shadow-blue-900/20 border-transparent",
+                variant === 'outline' && "bg-transparent border border-[var(--card-border)] text-[var(--foreground)] hover:border-[var(--primary)] hover:text-[var(--primary)] hover:bg-[var(--primary)]/5",
+                variant === 'ghost' && "bg-transparent text-[var(--foreground)]/70 hover:text-[var(--foreground)] hover:bg-[var(--foreground)]/5",
                 fullWidth && "w-full",
                 className
             )}
             {...props}
         >
-            {variant === 'primary' ? (
-                <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent select-none">
-                    {children}
-                </span>
-            ) : children}
+            {/* Direct children render - no gradient text spans for primary anymore, just clean professional text */}
+            {children}
         </button>
     );
 };

@@ -1,0 +1,1 @@
+https://accounts.google.com/o/oauth2/auth?response_type=code&client_id=1036082924271-u3151647bmm60lgnnqtbm6kktmcik562.apps.googleusercontent.com&redirect_uri=http%3A%2F%2Flocalhost%3A8000%2F&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.modify+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.send&state=4cmPYH6nsGre8gWa9JzzF1s9g3ugO5&prompt=consent&access_type=offline
