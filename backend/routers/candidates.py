@@ -2,11 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 from database import get_db
-import models
-import schemas
+import models, schemas, auth
 from loguru import logger
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(auth.RoleChecker("recruiter"))])
 
 @router.get("/", response_model=List[schemas.CandidateResponse])
 def get_candidates(db: Session = Depends(get_db)):

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from database import get_db
 import models
-import schemas
+import schemas, auth
 from services.matching import rank_candidate
 from services.embedding import EmbeddingService
 from services.resume_builder import ResumeBuilder
@@ -10,7 +10,7 @@ from services.analyzer import RequirementAnalyzer
 import datetime
 from loguru import logger
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(auth.get_current_user)])
 
 @router.post("/simulate", response_model=schemas.SimulationResponse)
 def simulate_ats(req: schemas.SimulationRequest, db: Session = Depends(get_db)):

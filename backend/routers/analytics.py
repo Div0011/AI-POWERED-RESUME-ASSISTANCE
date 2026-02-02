@@ -1,13 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
-import models
-import schemas
+import models, schemas, auth
 from collections import Counter
 import json
 from loguru import logger
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(auth.RoleChecker("recruiter"))])
 
 @router.get("/summary", response_model=schemas.AnalyticsSummaryResponse)
 def get_analytics_summary(db: Session = Depends(get_db)):

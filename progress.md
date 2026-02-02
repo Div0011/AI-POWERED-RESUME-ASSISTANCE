@@ -35,10 +35,18 @@
     - [x] Insights Dashboard with Recharts
     - [x] React Error Boundaries for Resilience
 
+- [x] Phase 2: The Gatekeeper (RBAC) [100% COMPLETE]
+    - [x] JWT Authentication System (FastAPI + JWT)
+    - [x] Login/Signup with Aesthetic Role Selection
+    - [x] Server-side Middleware Role Protection
+    - [x] Mission Board for Candidates (Browse all jobs)
+    - [x] Job Deployment form for Recruiters
+    - [x] Role-Based API Guarding (RoleChecker)
+
 ---
-**System is fully operational.**
+**System is fully operational and secured.**
 Recruiter Dashboard: `/recruiter/dashboard`
-Candidate Hub: `/candidate/check`
-Interview Simulator: `/candidate/interview`
-Talent Pool: `/recruiter/talent-pool`
-Analytics: `/recruiter/analytics`
+Candidate Mission Board: `/candidate/jobs`
+ATS Simulator: `/candidate/check`
+AI Interviewer: `/candidate/interview`
+Login Portal: `/login`

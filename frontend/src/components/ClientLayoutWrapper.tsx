@@ -9,13 +9,14 @@ import ErrorBoundary from "./ErrorBoundary";
 export const ClientLayoutWrapper = ({ children }: { children: React.ReactNode }) => {
     const pathname = usePathname();
     const isLandingPage = pathname === "/";
+    const showSidebar = pathname.startsWith('/recruiter') || pathname.startsWith('/candidate');
 
     return (
         <>
             {!isLandingPage && <BackButton />}
             <ThemeToggle />
-            {pathname.startsWith('/recruiter') && <Sidebar />}
-            <main className={`${isLandingPage ? "" : "md:pr-24"} pt-0 transition-all duration-300 min-h-screen`}>
+            {showSidebar && <Sidebar />}
+            <main className={`${showSidebar ? "md:pl-64" : ""} pt-0 transition-all duration-300 min-h-screen`}>
                 <ErrorBoundary>
                     {children}
                 </ErrorBoundary>

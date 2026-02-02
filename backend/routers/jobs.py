@@ -9,10 +9,8 @@ router = APIRouter()
 def create_job(
     job: schemas.JobCreate, 
     db: Session = Depends(database.get_db),
-    current_user: models.User = Depends(auth.get_current_user)
+    current_user: models.User = Depends(auth.RoleChecker("recruiter"))
 ):
-    if current_user.role != "recruiter":
-        raise HTTPException(status_code=403, detail="Only recruiters can create jobs")
     
     # Basic skill extraction from description (placeholder for LLM extraction)
     # In a real app, we'd use the Agent here too.
@@ -34,6 +32,8 @@ def get_jobs(
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(auth.get_current_user)
 ):
+    if current_user.role == "candidate":
+        return db.query(models.Job).all()
     return db.query(models.Job).filter(models.Job.owner_id == current_user.id).all()
 
 @router.get("/{job_id}", response_model=schemas.JobResponse)

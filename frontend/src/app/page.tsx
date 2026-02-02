@@ -44,6 +44,16 @@ export default function Home() {
         <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-[var(--accent)] opacity-10 blur-[120px] rounded-full" />
       </div>
 
+      <header className="absolute top-0 right-0 p-8 z-50 flex gap-4">
+        <button
+          onClick={() => router.push('/login')}
+          className="bg-white/5 hover:bg-white/10 border border-white/10 px-6 py-3 rounded-2xl flex items-center gap-2 text-white text-xs font-bold tracking-widest transition-all backdrop-blur-md"
+        >
+          <LogIn className="w-4 h-4 text-purple-400" />
+          IDENTITY PORTAL
+        </button>
+      </header>
+
       <div className="flex flex-col items-center justify-center z-10 w-full max-w-7xl mx-auto px-6 relative min-h-screen">
         <motion.div
           initial={{ opacity: 0, y: 20, scale: 0.9 }}
@@ -113,6 +123,6 @@ export default function Home() {
           </motion.div>
         )}
       </div>
-    </div>
+    </div >
   );
 }

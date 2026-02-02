@@ -3,14 +3,17 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import { Mail, Lock, ArrowRight, Sparkles, Loader2, AlertCircle } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Sparkles, Loader2, AlertCircle, User, Briefcase } from 'lucide-react';
 import axios from 'axios';
 import { API_BASE } from '@/config';
 import { useAuth } from '@/context/AuthContext';
 
-export default function LoginPage() {
+type Role = 'candidate' | 'recruiter';
+
+export default function SignupPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [role, setRole] = useState<Role>('candidate');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
     const router = useRouter();
@@ -22,10 +25,10 @@ export default function LoginPage() {
         setError("");
 
         try {
-            const res = await axios.post(`${API_BASE}/auth/login`, { email, password });
+            const res = await axios.post(`${API_BASE}/auth/signup`, { email, password, role });
             login(res.data.access_token, res.data.role, email);
         } catch (err: any) {
-            setError(err.response?.data?.detail || "Login failed. Please check your credentials.");
+            setError(err.response?.data?.detail || "Registration failed. Please try again.");
         } finally {
             setIsLoading(false);
         }
@@ -34,8 +37,8 @@ export default function LoginPage() {
     return (
         <div className="min-h-screen flex items-center justify-center p-6 relative overflow-hidden bg-[#050505]">
             {/* Background Glows */}
-            <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-purple-600/10 blur-[120px] rounded-full" />
-            <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-600/10 blur-[120px] rounded-full" />
+            <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-purple-600/10 blur-[120px] rounded-full" />
+            <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-blue-600/10 blur-[120px] rounded-full" />
 
             <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
@@ -43,17 +46,44 @@ export default function LoginPage() {
                 className="w-full max-w-md relative z-10"
             >
                 <div className="glass-panel p-10 rounded-[2.5rem] border border-white/10 shadow-2xl">
-                    <div className="flex flex-col items-center mb-10">
+                    <div className="flex flex-col items-center mb-8">
                         <div className="w-16 h-16 bg-gradient-to-tr from-purple-600 to-blue-500 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/20 mb-6">
                             <Sparkles className="text-white w-8 h-8" />
                         </div>
-                        <h1 className="text-3xl font-bold tracking-tighter text-white font-agale">Welcome Back</h1>
-                        <p className="text-white/40 text-sm mt-2">Enter credentials to access GET IT!</p>
+                        <h1 className="text-3xl font-bold tracking-tighter text-white font-agale">Create Identity</h1>
+                        <p className="text-white/40 text-sm mt-2">Join the agentic recruitment era</p>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-5">
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        {/* Role Selection */}
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 ml-1">Email Protocol</label>
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 ml-1">Account Protocol</label>
+                            <div className="grid grid-cols-2 gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setRole('candidate')}
+                                    className={`flex flex-col items-center gap-3 p-4 rounded-2xl border transition-all ${role === 'candidate'
+                                        ? 'bg-purple-600 border-purple-500 text-white shadow-lg shadow-purple-600/20'
+                                        : 'bg-white/5 border-white/10 text-white/40 hover:bg-white/[0.08]'}`}
+                                >
+                                    <User className="w-6 h-6" />
+                                    <span className="text-[10px] font-black uppercase tracking-widest">Candidate</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setRole('recruiter')}
+                                    className={`flex flex-col items-center gap-3 p-4 rounded-2xl border transition-all ${role === 'recruiter'
+                                        ? 'bg-blue-600 border-blue-500 text-white shadow-lg shadow-blue-600/20'
+                                        : 'bg-white/5 border-white/10 text-white/40 hover:bg-white/[0.08]'}`}
+                                >
+                                    <Briefcase className="w-6 h-6" />
+                                    <span className="text-[10px] font-black uppercase tracking-widest">Recruiter</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 ml-1">Secure Email</label>
                             <div className="relative group">
                                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/20 group-focus-within:text-purple-400 transition-colors" />
                                 <input
@@ -61,14 +91,14 @@ export default function LoginPage() {
                                     required
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    placeholder="name@company.com"
+                                    placeholder="agent@getit.ai"
                                     className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white placeholder:text-white/10 focus:outline-none focus:border-purple-500/50 focus:bg-white/[0.08] transition-all"
                                 />
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 ml-1">Secure Pin</label>
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 ml-1">Establish Password</label>
                             <div className="relative group">
                                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/20 group-focus-within:text-purple-400 transition-colors" />
                                 <input
@@ -77,6 +107,7 @@ export default function LoginPage() {
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     placeholder="••••••••"
+                                    min={8}
                                     className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white placeholder:text-white/10 focus:outline-none focus:border-purple-500/50 focus:bg-white/[0.08] transition-all"
                                 />
                             </div>
@@ -102,7 +133,7 @@ export default function LoginPage() {
                                 <Loader2 className="w-6 h-6 animate-spin" />
                             ) : (
                                 <>
-                                    LOGIN PORTAL
+                                    ACTIVATE PROTOCOLS
                                     <ArrowRight className="w-5 h-5" />
                                 </>
                             )}
@@ -110,12 +141,12 @@ export default function LoginPage() {
                     </form>
 
                     <div className="mt-8 text-center text-sm font-medium">
-                        <span className="text-white/20">New operative? </span>
+                        <span className="text-white/20">Already verified? </span>
                         <button
-                            onClick={() => router.push('/signup')}
+                            onClick={() => router.push('/login')}
                             className="text-purple-400 hover:text-purple-300 transition-colors font-bold"
                         >
-                            Register Identity
+                            Identity Portal
                         </button>
                     </div>
                 </div>

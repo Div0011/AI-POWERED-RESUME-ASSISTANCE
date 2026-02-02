@@ -1,86 +1,127 @@
 "use client";
 
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Search, MapPin, Briefcase, Zap, Star } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useRouter } from 'next/navigation';
+import { Briefcase, Search, Sparkles, ArrowRight, Loader2, MapPin, Clock, Filter, BrainCircuit } from 'lucide-react';
+import axios from 'axios';
+import { API_BASE } from '@/config';
 
-// Mock Data for Jobs
-const MOCK_PUBLIC_JOBS = [
-    { id: 1, title: "Senior Frontend Engineer", company: "TechCorp", location: "Remote", type: "Full-time", skills: ["React", "Typescript", "Tailwind"], match: 94 },
-    { id: 2, title: "Product Designer", company: "CreativeStudio", location: "New York, NY", type: "Contract", skills: ["Figma", "UI/UX", "Prototyping"], match: 45 },
-    { id: 3, title: "Backend Developer", company: "DataSystems", location: "San Francisco, CA", type: "Full-time", skills: ["Python", "Django", "AWS"], match: 88 },
-];
+interface Job {
+    id: number;
+    title: string;
+    description: string;
+    required_skills: string[];
+}
 
-export default function JobMatchPage() {
+export default function CandidateJobBoard() {
+    const [jobs, setJobs] = useState<Job[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState("");
+    const router = useRouter();
+
+    useEffect(() => {
+        const fetchJobs = async () => {
+            try {
+                const res = await axios.get(`${API_BASE}/jobs/`);
+                setJobs(res.data);
+            } catch (err) {
+                console.error("Failed to fetch jobs", err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchJobs();
+    }, []);
+
+    const filteredJobs = jobs.filter(job =>
+        job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        job.description.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
     return (
-        <div className="min-h-screen p-4 md:p-8 pt-20 md:pt-28 text-white pb-24 md:pb-8">
-            <div className="max-w-5xl mx-auto">
-                <header className="mb-12 text-center">
-                    <h1 className="text-4xl md:text-5xl font-bold tracking-wide mb-4 drop-shadow-md uppercase mt-12 md:mt-0" style={{ fontFamily: 'var(--font-agale)' }}>
-                        AI Job Match
-                    </h1>
-                    <p className="text-white/60 max-w-2xl mx-auto">
-                        We analyzed your resume and found these roles where you have the highest chance of getting an interview.
-                    </p>
+        <div className="min-h-screen p-8 pt-28 text-white bg-[#050505]">
+            <div className="max-w-6xl mx-auto">
+                <header className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-3 text-purple-400">
+                            <Briefcase className="w-5 h-5" />
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Deployment Terminal</span>
+                        </div>
+                        <h1 className="text-5xl font-bold tracking-tight font-agale italic">Explore Opportunities</h1>
+                        <p className="text-white/40 text-lg font-light max-w-xl">
+                            Select a mission. Use our <span className="text-white font-medium">ATS Simulator</span> to verify your match before applying.
+                        </p>
+                    </div>
+
+                    <div className="relative group w-full md:w-96">
+                        <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-white/20 group-focus-within:text-purple-400 transition-colors" />
+                        <input
+                            type="text"
+                            placeholder="Search missions..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-14 pr-6 text-white placeholder:text-white/10 focus:outline-none focus:border-purple-500/50 focus:bg-white/[0.08] transition-all"
+                        />
+                    </div>
                 </header>
 
-                {/* Search Bar */}
-                <div className="relative mb-12 max-w-2xl mx-auto">
-                    <Search className="absolute left-5 top-4 w-5 h-5 text-white/50" />
-                    <input
-                        type="text"
-                        placeholder="Search for roles, skills, or companies..."
-                        className="w-full pl-14 pr-6 py-4 rounded-2xl bg-white/10 border border-white/20 text-white placeholder-white/40 focus:outline-none focus:bg-white/20 focus:border-white/40 transition-all shadow-lg backdrop-blur-md"
-                    />
-                </div>
+                {isLoading ? (
+                    <div className="flex flex-col items-center justify-center py-40 gap-4">
+                        <Loader2 className="w-10 h-10 text-purple-500 animate-spin" />
+                        <p className="text-white/20 text-xs font-bold uppercase tracking-widest">Scanning Network...</p>
+                    </div>
+                ) : filteredJobs.length === 0 ? (
+                    <div className="text-center py-40 border-2 border-dashed border-white/5 rounded-[3rem]">
+                        <p className="text-white/20 font-medium">No missions found matching your search parameters.</p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {filteredJobs.map((job, index) => (
+                            <motion.div
+                                key={job.id}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: index * 0.05 }}
+                                className="glass-panel p-8 rounded-[2.5rem] border border-white/10 hover:border-purple-500/30 transition-all group relative overflow-hidden"
+                            >
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-purple-600/5 blur-[50px] opacity-0 group-hover:opacity-100 transition-opacity" />
 
-                {/* Job List */}
-                <div className="space-y-6">
-                    {MOCK_PUBLIC_JOBS.map((job) => (
-                        <motion.div
-                            key={job.id}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            whileHover={{ scale: 1.01 }}
-                            className="bg-white/10 backdrop-blur-md p-8 rounded-3xl border border-white/20 shadow-xl hover:bg-white/15 transition-all relative overflow-hidden"
-                        >
-                            {/* Match Badge */}
-                            <div className="absolute top-0 right-0 p-4">
-                                <div className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold shadow-lg border border-white/10
-                                    ${job.match > 80 ? 'bg-emerald-500/20 text-emerald-200' : 'bg-amber-500/20 text-amber-200'}
-                                `}>
-                                    <Zap className="w-4 h-4 fill-current" />
-                                    {job.match}% Match
-                                </div>
-                            </div>
-
-                            <div className="flex flex-col md:flex-row gap-6 items-start">
-                                <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center shadow-inner">
-                                    <Briefcase className="w-8 h-8 text-white" />
-                                </div>
-                                <div className="flex-1">
-                                    <h3 className="text-2xl font-bold mb-2">{job.title}</h3>
-                                    <div className="flex flex-wrap gap-4 text-sm text-white/60 mb-4">
-                                        <span className="flex items-center gap-1"><Briefcase className="w-4 h-4" /> {job.company}</span>
-                                        <span className="flex items-center gap-1"><MapPin className="w-4 h-4" /> {job.location}</span>
-                                        <span className="bg-white/10 px-2 py-0.5 rounded text-white/80">{job.type}</span>
-                                    </div>
-                                    <div className="flex flex-wrap gap-2">
-                                        {job.skills.map(skill => (
-                                            <span key={skill} className="text-xs font-semibold bg-black/20 px-3 py-1 rounded-full text-white/80 border border-white/5">
-                                                {skill}
-                                            </span>
-                                        ))}
+                                <div className="flex justify-between items-start mb-6">
+                                    <h2 className="text-2xl font-bold text-white group-hover:text-purple-400 transition-colors pr-8">{job.title}</h2>
+                                    <div className="bg-white/5 p-2 rounded-xl border border-white/10">
+                                        <BrainCircuit className="w-5 h-5 text-purple-400" />
                                     </div>
                                 </div>
-                                <div className="self-end md:self-center">
-                                    <Button className="px-8">Apply Now</Button>
+
+                                <p className="text-white/40 text-sm mb-8 line-clamp-3 leading-relaxed">
+                                    {job.description}
+                                </p>
+
+                                <div className="flex flex-wrap gap-2 mb-8">
+                                    {job.required_skills.slice(0, 4).map((skill, i) => (
+                                        <span key={i} className="px-3 py-1.5 bg-white/5 border border-white/5 rounded-lg text-[10px] font-bold text-white/50 uppercase tracking-widest">
+                                            {skill}
+                                        </span>
+                                    ))}
+                                    {job.required_skills.length > 4 && (
+                                        <span className="px-3 py-1.5 text-[10px] font-bold text-white/20 uppercase tracking-widest">
+                                            +{job.required_skills.length - 4} more
+                                        </span>
+                                    )}
                                 </div>
-                            </div>
-                        </motion.div>
-                    ))}
-                </div>
+
+                                <button
+                                    onClick={() => router.push(`/candidate/check?job_id=${job.id}`)}
+                                    className="w-full bg-white text-black font-black py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-purple-500 hover:text-white transition-all active:scale-[0.98]"
+                                >
+                                    SIMULATE MATCH
+                                    <ArrowRight className="w-4 h-4" />
+                                </button>
+                            </motion.div>
+                        ))}
+                    </div>
+                )}
             </div>
         </div>
     );

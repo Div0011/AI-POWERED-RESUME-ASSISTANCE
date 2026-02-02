@@ -21,42 +21,55 @@
     *   **Framer Motion** handles heavily animated transitions (e.g., the Landing Page split).
     *   **Lucide React** for consistent iconography.
 
-### **Database: PostgreSQL**
-*   **Why SQL?** Our data is structured (Users have Jobs, Jobs have Candidates). Relational databases enforce these links (Foreign Keys), ensuring data integrity.
+### **Database: SQLite (Development) / PostgreSQL (Production)**
+*   **Why SQL?** Our data is highly relational: Users (Recruiters/Candidates), Jobs, Resumes, and Simulations.
+*   **Vector Support**: We use a hybrid approach. 60% of scoring is LLM-based (Gemini), while 40% is Semantic Vector Similarity (Cosine).
 
 ---
 
-## 2. System Architecture: The Dual-Side Platform
+## 2. System Architecture: The "Gatekeeper" RBAC
+The application is strictly governed by **Role-Based Access Control (RBAC)**, ensuring data privacy and a customized experience for each side.
 
-The application is now split into two distinct ecosystems: **Recruiters** and **Candidates**.
+### **A. Authentication Layer (The Foundation)**
+*   **JWT Implementation**: Located in `backend/auth.py`. We use `pbkdf2_sha256` for hashing and `python-jose` for JWT signing.
+*   **The Session Handshake**:
+    1.  **Login/Signup**: User selects a role ('candidate' or 'recruiter') during registration.
+    2.  **Token Issuance**: The JWT payload contains the user's `sub` (email) and the response includes their `role`.
+    3.  **Client-Side Persistence**: `AuthContext.tsx` stores the token and role in `localStorage` for UI state and `document.cookie` for server-side middleware.
 
-### **A. Landng Page & Navigation**
-*   **Role Selection**: The root page (`/`) forces a choice: "Recruiters" or "Candidates". This keeps the UX clean and targeted.
-*   **Context-Aware Sidebar**:
-    *   Located on the **Right** (non-standard, to stand out).
-    *   **Collapsible**: Expands on hover.
-    *   **Smart**: It automatically detects the user's "Zone" (URL starting with `/recruiter` or `/candidate`) and changes its menu items accordingly.
+### **B. Middleware Security (Next.js)**
+*   **File**: `frontend/src/middleware.ts`.
+*   **Logic**: Before a page renders, the middleware checks for a `token` and `role` cookie.
+    *   If a Candidate tries to access `/recruiter/*`, they are redirected to `/candidate/check`.
+    *   If an Unauthenticated user tries to access protected routes, they are sent to `/login`.
 
-### **B. Recruiter Ecosystem**
-Tools designed to automate volume hiring.
-1.  **Job Dashboard (`/dashboard`)**: The classic ATS view. Post jobs, see applicant lists, and AI scores.
-2.  **Smart Inbox (`/recruiter/inbox`)**:
-    *   **Goal**: Replace the need to check Gmail.
-    *   **Mock Logic**: Simulates real-time email parsing. It identifies incoming resumes, auto-scores them, and assigns a status (processed, ignored).
-3.  **Analytics (`/recruiter/analytics`)**:
-    *   **Goal**: Visual insights.
-    *   **Tech**: Custom CSS-animated bar charts and conversion funnels to visualize "Time to Hire" and "Pipeline Health".
+### **C. Backend Router Security (FastAPI Dependencies)**
+*   **RoleChecker**: A custom class in `backend/auth.py` used as a FastAPI dependency.
+*   **Usage**: 
+    ```python
+    router = APIRouter(dependencies=[Depends(auth.RoleChecker("recruiter"))])
+    ```
+*   **Enforcement**: This ensures that even if a user bypasses the frontend, the API will return a `403 Forbidden` if the role doesn't match.
 
-### **C. Candidate Ecosystem**
-Tools designed to help applicants "hack" the hiring process.
-1.  **Resume Improver (`/candidate/resume`)**:
-    *   **Goal**: Automated critique.
-    *   **Flow**: User uploads PDF -> Simulated AI Agent analyzes -> Returns ATS Score (0-100) + Generative text improvements.
-2.  **Job Match (`/candidate/jobs`)**:
-    *   **Goal**: Reverse search. Instead of searching for jobs, the system finds jobs matching the *candidate's* resume vector.
-3.  **Interview Prep (`/candidate/interview`)**:
-    *   **Goal**: Mock simulation.
-    *   **Tech**: A chat interface that mimics a recruiter. It asks behavioral questions, waits for answers, and (simulated) provides feedback.
+---
+
+## 3. Ecosystem Deep Dives
+
+### **A. Recruiter Portal (`/recruiter/*`)**
+1.  **Dashboard**: Central hub for managing job posts and candidates.
+2.  **Job Creation (`/recruiter/jobs/create`)**:
+    *   **Workflow**: Recruiter enters a JD -> DB stores it -> LLM extracts required skills -> Listing becomes live for the world.
+3.  **Talent Pool**: Searchable database of all candidates who have applied or matched.
+4.  **Analytics**: Secured view of pipeline health.
+
+### **B. Candidate Portal (`/candidate/*`)**
+1.  **Mission Board (`/candidate/jobs`)**:
+    *   **Discovery**: View all active job postings from all recruiters.
+2.  **ATS Simulator (`/candidate/check`)**:
+    *   **The Check**: Candidates upload a resume for a specific `job_id`.
+    *   **The Result**: 0-100 score + "Coaching Feedback" (rewritten by AI to be helpful, not just evaluative).
+3.  **AI Technical Interviewer (`/candidate/interview`)**:
+    *   **Real-time Interaction**: A structured interview loop (Ice-breaker -> Follow-ups -> Feedback).
 
 ---
 
@@ -105,21 +118,18 @@ Tools designed to help applicants "hack" the hiring process.
 
 ## 5. End-to-End User Journeys
 
-### **Journey 1: The Recruiter**
-1.  Lands on `GET IT!` home page.
-2.  Selects "RECRUITERS". Leads to **Recruiter Hub**.
-3.  Opens **Smart Inbox** to see auto-filtered emails.
-4.  Clicks on a high-scoring candidate -> Redirects to **Dashboard**.
-5.  Views detailed AI reasoning and "Hires" the candidate.
-6.  Checks **Analytics** to see the "Time to Hire" metric improve.
+### **Journey 1: The Modern Recruiter**
+1.  **Identity Portal**: Logs in as "Recruiter".
+2.  **Job Deployment**: Create a new "Senior Engineer" job post.
+3.  **Talent Sourcing**: Opens the **Talent Pool** or **Dashboard** to see AI-ranked matches.
+4.  **Decision**: Approves a candidate, triggering an automated email via the `CommunicationService`.
 
-### **Journey 2: The Candidate**
-1.  Lands on `GET IT!` home page.
-2.  Selects "CANDIDATES". Leads to **Candidate Hub**.
-3.  Opens **Resume Improver**. Uploads their PDF.
-4.  Gets a score of 72/100 and specific advice to fix "Passive Verbs".
-5.  Goes to **Job Match**. Sees they are now a 94% match for a "Senior Frontend" role.
-6.  Uses **Interview Prep** to practice telling their story before the real interview.
+### **Journey 2: The Empowered Candidate**
+1.  **Identity Portal**: Logs in as "Candidate".
+2.  **Discovery**: Browses the **Mission Board**. Finds an interesting role.
+3.  **Simulation**: Runs the **ATS Simulator**. Gets a 65% score.
+4.  **Improvization**: Uses the **Bullet Point Improver** until the score hits 90%.
+5.  **Preparation**: Runs a mock **AI Interview** and gets a feedback report.
 
 ---
 

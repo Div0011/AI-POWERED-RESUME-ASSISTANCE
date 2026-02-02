@@ -21,3 +21,10 @@ token.json
 .vscode/
 temp_processing/
 !credentials.json.example
+
+# Database & Logs
+*.db
+backend/server_log_cmd.txt
+builder_diag.txt
+crash_log.txt
+auth_url.txt

@@ -4,11 +4,22 @@ from typing import List, Optional, Dict, Any
 class UserCreate(BaseModel):
     email: EmailStr
     password: str
-    role: str = "recruiter"
+    role: str = "candidate" # Default role
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+class UserResponse(BaseModel):
+    id: int
+    email: EmailStr
+    role: str
+    model_config = ConfigDict(from_attributes=True)
 
 class Token(BaseModel):
     access_token: str
     token_type: str
+    role: str
 
 class JobCreate(BaseModel):
     title: str = Field(..., min_length=1)

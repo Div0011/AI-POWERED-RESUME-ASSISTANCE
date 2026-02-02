@@ -1,12 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
-import models
-import schemas
+import models, schemas, auth
 from services.interviewer import InterviewService
 from loguru import logger
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(auth.get_current_user)])
 interviewer_service = InterviewService()
 
 @router.post("/start", response_model=schemas.InterviewStepResponse)

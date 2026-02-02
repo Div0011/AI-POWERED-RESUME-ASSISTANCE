@@ -34,22 +34,32 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     return encoded_jwt
 
 async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(database.get_db)):
-    # BYPASS AUTHENTICATION FOR DEVELOPMENT
-    # Always return the admin user regardless of token
-    admin_email = "admin@123.login"
-    user = db.query(models.User).filter(models.User.email == admin_email).first()
-    
-    if not user:
-        # Fallback if admin wasn't created yet, return the first user
-        user = db.query(models.User).first()
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email: str = payload.get("sub")
+        if email is None:
+            raise credentials_exception
+    except JWTError:
+        raise credentials_exception
         
-    if not user:
-         # If absolutely no user exists, create a dummy one in memory (fragile but works for now)
-         # Better to rely on the seed script having run.
-         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="No users found in DB. Please run create_admin.py",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-        
+    user = db.query(models.User).filter(models.User.email == email).first()
+    if user is None:
+        raise credentials_exception
     return user
+
+class RoleChecker:
+    def __init__(self, required_role: str):
+        self.required_role = required_role
+
+    def __call__(self, user: models.User = Depends(get_current_user)):
+        if user.role != self.required_role:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Operation not permitted for role: {user.role}. Required: {self.required_role}"
+            )
+        return user

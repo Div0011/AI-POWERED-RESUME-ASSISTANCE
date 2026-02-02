@@ -5,18 +5,25 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Users, Briefcase, Settings, LogOut, Sparkles, BarChart3, FileText, MessageSquare } from 'lucide-react';
 
-const menuItems = [
+const recruiterMenuItems = [
     { name: 'Dashboard', icon: LayoutDashboard, path: '/recruiter/dashboard' },
     { name: 'Talent Pool', icon: Users, path: '/recruiter/talent-pool' },
     { name: 'Analytics', icon: BarChart3, path: '/recruiter/analytics' },
-    { name: 'Candidate Hub', icon: FileText, path: '/candidate/check' },
-    { name: 'Interviewer', icon: MessageSquare, path: '/candidate/interview' },
+];
+
+const candidateMenuItems = [
+    { name: 'Mission Board', icon: Briefcase, path: '/candidate/jobs' },
+    { name: 'ATS Simulator', icon: FileText, path: '/candidate/check' },
+    { name: 'AI Interviewer', icon: MessageSquare, path: '/candidate/interview' },
 ];
 
 import { motion } from 'framer-motion';
+import { useAuth } from '@/context/AuthContext';
 
 export default function Sidebar() {
     const pathname = usePathname();
+    const { logout, user } = useAuth();
+    const menuItems = user?.role === 'recruiter' ? recruiterMenuItems : candidateMenuItems;
 
     return (
         <aside className="fixed left-0 top-0 h-screen w-64 bg-black/40 backdrop-blur-xl border-r border-white/10 p-6 flex flex-col z-50">
@@ -54,7 +61,10 @@ export default function Sidebar() {
                     <Settings className="w-5 h-5" />
                     <span className="font-medium text-sm">Settings</span>
                 </button>
-                <button className="flex items-center gap-3 px-4 py-3 rounded-xl text-rose-400/70 hover:text-rose-400 hover:bg-rose-500/5 w-full transition-all">
+                <button
+                    onClick={logout}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-rose-400/70 hover:text-rose-400 hover:bg-rose-500/5 w-full transition-all"
+                >
                     <LogOut className="w-5 h-5" />
                     <span className="font-medium text-sm">Sign Out</span>
                 </button>
