@@ -3,7 +3,7 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { LayoutDashboard, Mail, PieChart, ArrowRight } from 'lucide-react';
+import { LayoutDashboard, Mail, PieChart, ArrowRight, Users } from 'lucide-react';
 
 export default function RecruiterHub() {
     const router = useRouter();
