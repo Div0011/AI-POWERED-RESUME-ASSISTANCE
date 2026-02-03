@@ -22,11 +22,18 @@ export default function CandidateHub() {
             icon: <Mic className="w-8 h-8 text-[var(--accent)]" />,
             path: "/candidate/interview",
             color: "bg-[var(--accent)]/10 border-cyan-500/20"
+        },
+        {
+            title: "Smart Job Board",
+            desc: "Browse and apply to AI-curated job listings that match your skills.",
+            icon: <Briefcase className="w-8 h-8 text-purple-400" />,
+            path: "/candidate/jobs",
+            color: "bg-purple-400/10 border-purple-400/20"
         }
     ];
 
     return (
-        <div className="min-h-screen p-4 md:p-8 pt-20 md:pt-28 text-[var(--foreground)] flex flex-col items-center justify-center pb-24 md:pb-8">
+        <div className="p-4 md:p-8 pt-32 text-[var(--foreground)] flex flex-col items-center justify-start">
             <header className="mb-16 text-center">
                 <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4 drop-shadow-sm uppercase text-transparent bg-clip-text bg-gradient-to-r from-[var(--foreground)] to-[var(--foreground)]/70" style={{ fontFamily: 'var(--font-agale)' }}>
                     Candidate Hub

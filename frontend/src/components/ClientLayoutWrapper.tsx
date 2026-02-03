@@ -1,19 +1,45 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import Sidebar from "./Sidebar";
+import { HeaderMenu } from "./HeaderMenu";
 import { BackButton } from "./BackButton";
 import { ThemeToggle } from "./ui/ThemeToggle";
 import ErrorBoundary from "./ErrorBoundary";
 import { useAuth } from "@/context/AuthContext";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { LayoutProvider, useLayout } from "@/context/LayoutContext";
+import { motion, AnimatePresence } from "framer-motion";
+import { Plus, Search } from "lucide-react";
 
-export const ClientLayoutWrapper = ({ children }: { children: React.ReactNode }) => {
+const ActionHUD = () => {
+    return (
+        <div className="fixed bottom-8 right-8 z-50 flex flex-col gap-4">
+            <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="w-14 h-14 bg-[var(--primary)] rounded-full flex items-center justify-center text-white shadow-[0_0_20px_rgba(79,70,229,0.3)] hover:shadow-[0_0_30px_rgba(79,70,229,0.5)] transition-all"
+            >
+                <Plus className="w-8 h-8" strokeWidth={2} />
+            </motion.button>
+        </div>
+    );
+};
+
+const LiquidProgressBar = ({ isLoading }: { isLoading: boolean }) => {
+    if (!isLoading) return null;
+    return <div className="liquid-progress" />;
+};
+
+const ClientLayoutContent = ({ children }: { children: React.ReactNode }) => {
     const pathname = usePathname();
     const router = useRouter();
-    const { token, user, isLoading } = useAuth();
+    const { token, user, isLoading: authLoading } = useAuth();
+    // const { isCollapsed } = useLayout(); // No longer needed for top nav
     const isLandingPage = pathname === "/";
-    const showSidebar = pathname.startsWith('/recruiter') || pathname.startsWith('/candidate');
+    const showMenu = pathname.startsWith('/recruiter') || pathname.startsWith('/candidate');
+
+    // Simulating "AI Processing" loading state for demo
+    const [isProcessing, setIsProcessing] = useState(false);
 
     useEffect(() => {
         // 0. Development Mode Bypass
@@ -21,7 +47,7 @@ export const ClientLayoutWrapper = ({ children }: { children: React.ReactNode })
             return;
         }
 
-        if (isLoading) return;
+        if (authLoading) return;
 
         // 1. Redirect unauthenticated users
         if (!token && (pathname.startsWith('/recruiter') || pathname.startsWith('/candidate'))) {
@@ -37,18 +63,51 @@ export const ClientLayoutWrapper = ({ children }: { children: React.ReactNode })
         if (token && user?.role === 'recruiter' && pathname.startsWith('/candidate')) {
             router.push('/recruiter/dashboard');
         }
-    }, [pathname, token, user, isLoading, router]);
+    }, [pathname, token, user, authLoading, router]);
 
     return (
-        <>
-            {!isLandingPage && <BackButton />}
-            <ThemeToggle />
-            {showSidebar && <Sidebar />}
-            <main className={`${showSidebar ? "md:pl-64" : ""} pt-0 transition-all duration-300 min-h-screen`}>
+        <div className="min-h-screen text-[var(--foreground)] selection:bg-[var(--primary)] selection:text-white">
+            <LiquidProgressBar isLoading={authLoading || isProcessing} />
+
+            {!isLandingPage && !showMenu && <BackButton />}
+
+            {/* Top Right Controls - Cleaned up */}
+            <div className="fixed top-6 right-6 z-50 flex items-center gap-3">
+                {/* Search removed as per user request */}
+            </div>
+
+            {showMenu && <HeaderMenu />}
+
+            <main
+                className="transition-all duration-500 ease-in-out min-h-screen pt-24 px-6 md:px-12 max-w-7xl mx-auto"
+            >
                 <ErrorBoundary>
-                    {children}
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={pathname}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                            transition={{ duration: 0.3, ease: "easeOut" }}
+                            className="h-full"
+                        >
+                            {children}
+                        </motion.div>
+                    </AnimatePresence>
                 </ErrorBoundary>
             </main>
-        </>
+
+            {/* ActionHUD (Plus Button) Removed */}
+        </div>
+    );
+}
+
+export const ClientLayoutWrapper = ({ children }: { children: React.ReactNode }) => {
+    return (
+        <LayoutProvider>
+            <ClientLayoutContent>
+                {children}
+            </ClientLayoutContent>
+        </LayoutProvider>
     );
 };

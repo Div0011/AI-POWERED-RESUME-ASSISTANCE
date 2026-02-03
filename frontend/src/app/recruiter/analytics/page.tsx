@@ -79,14 +79,14 @@ export default function AnalyticsPage() {
     ];
 
     return (
-        <div className="min-h-screen bg-[#020202] text-white p-8 pl-72 selection:bg-purple-500/30">
+        <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] p-8 pl-6 md:pl-12 lg:pl-24 selection:bg-purple-500/30 font-sans">
             <header className="mb-12">
                 <div className="flex items-center gap-2 mb-2 opacity-50">
                     <TrendingUp className="w-4 h-4" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Global Insights</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-[var(--primary)]">Global Insights</span>
                 </div>
-                <h1 className="text-4xl font-black tracking-tight">Recruitment Intelligence</h1>
-                <p className="text-white/40 font-medium">Data-driven analysis of your talent pipeline.</p>
+                <h1 className="text-4xl font-agale font-bold tracking-tight mb-2">Recruitment Intelligence</h1>
+                <p className="text-[var(--foreground)]/40 font-medium font-mono text-sm leading-relaxed">Data-driven analysis of your talent pipeline.</p>
             </header>
 
             {/* At-a-Glance Cards */}
@@ -97,14 +97,14 @@ export default function AnalyticsPage() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.1 }}
-                        className="bg-white/[0.03] border border-white/10 rounded-[2rem] p-8 relative overflow-hidden group hover:bg-white/[0.05] transition-colors"
+                        className="glass-panel p-8 rounded-[2rem] relative overflow-hidden group hover:border-[var(--primary)]/30 transition-all"
                     >
                         <div className={`p-4 ${card.bg} rounded-2xl w-fit mb-6 group-hover:scale-110 transition-transform`}>
                             <card.icon className={`w-6 h-6 ${card.color}`} />
                         </div>
-                        <h3 className="text-white/40 text-sm font-black uppercase tracking-widest mb-1">{card.title}</h3>
-                        <div className="text-4xl font-black mb-2">{card.value}</div>
-                        <p className="text-[10px] text-white/20 font-bold uppercase tracking-widest">{card.desc}</p>
+                        <h3 className="text-[var(--foreground)]/40 text-sm font-black uppercase tracking-widest mb-1">{card.title}</h3>
+                        <div className="text-4xl font-black mb-2 text-[var(--foreground)] font-agale">{card.value}</div>
+                        <p className="text-[10px] text-[var(--foreground)]/20 font-bold uppercase tracking-widest font-mono">{card.desc}</p>
                     </motion.div>
                 ))}
             </div>
@@ -114,14 +114,14 @@ export default function AnalyticsPage() {
                 <motion.div
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="bg-white/[0.03] border border-white/10 rounded-[2.5rem] p-10"
+                    className="glass-panel p-10 rounded-[2.5rem]"
                 >
                     <div className="flex items-center justify-between mb-10">
                         <div>
-                            <h2 className="text-xl font-black">Skill Gap Analysis</h2>
-                            <p className="text-xs text-white/30 font-medium italic mt-1">Top missing skills identified by Gemini AI</p>
+                            <h2 className="text-xl font-black font-agale">Skill Gap Analysis</h2>
+                            <p className="text-xs text-[var(--foreground)]/30 font-medium italic mt-1">Top missing skills identified by Gemini AI</p>
                         </div>
-                        <div className="p-3 bg-white/5 rounded-2xl border border-white/10 cursor-help">
+                        <div className="p-3 bg-[var(--foreground)]/5 rounded-2xl border border-[var(--card-border)] cursor-help">
                             <Info className="w-4 h-4 opacity-40" />
                         </div>
                     </div>
@@ -135,11 +135,11 @@ export default function AnalyticsPage() {
                                     type="category"
                                     axisLine={false}
                                     tickLine={false}
-                                    tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 10, fontWeight: 800 }}
+                                    tick={{ fill: 'var(--foreground)', opacity: 0.4, fontSize: 10, fontWeight: 800 }}
                                 />
                                 <RechartsTooltip
                                     cursor={{ fill: 'rgba(255,255,255,0.02)' }}
-                                    contentStyle={{ backgroundColor: '#111', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
+                                    contentStyle={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: '12px', color: 'var(--foreground)' }}
                                 />
                                 <Bar dataKey="count" radius={[0, 8, 8, 0]}>
                                     {(data?.skill_gaps || []).map((entry, index) => (
@@ -155,12 +155,12 @@ export default function AnalyticsPage() {
                 <motion.div
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="bg-white/[0.03] border border-white/10 rounded-[2.5rem] p-10"
+                    className="glass-panel p-10 rounded-[2.5rem]"
                 >
                     <div className="flex items-center justify-between mb-10">
                         <div>
-                            <h2 className="text-xl font-black">Score Distribution</h2>
-                            <p className="text-xs text-white/30 font-medium italic mt-1">Global spread of 0-100% match scores</p>
+                            <h2 className="text-xl font-black font-agale">Score Distribution</h2>
+                            <p className="text-xs text-[var(--foreground)]/30 font-medium italic mt-1">Global spread of 0-100% match scores</p>
                         </div>
                         <div className="flex items-center gap-2 px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-[10px] font-black text-emerald-400">
                             <ArrowUpRight className="w-3 h-3" /> LIVE DATA
@@ -180,11 +180,11 @@ export default function AnalyticsPage() {
                                     dataKey="bin"
                                     axisLine={false}
                                     tickLine={false}
-                                    tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 10, fontWeight: 800 }}
+                                    tick={{ fill: 'var(--foreground)', opacity: 0.4, fontSize: 10, fontWeight: 800 }}
                                 />
                                 <YAxis hide />
                                 <RechartsTooltip
-                                    contentStyle={{ backgroundColor: '#111', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
+                                    contentStyle={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: '12px', color: 'var(--foreground)' }}
                                 />
                                 <Area
                                     type="monotone"

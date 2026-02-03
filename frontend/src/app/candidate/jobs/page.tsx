@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import { Briefcase, Search, Sparkles, ArrowRight, Loader2, MapPin, Clock, Filter, BrainCircuit } from 'lucide-react';
+import { Briefcase, Search, Sparkles, ArrowRight, Loader2, Cpu, Code, Globe, Terminal } from 'lucide-react';
 import axios from 'axios';
 import { API_BASE } from '@/config';
 
@@ -40,89 +40,95 @@ export default function CandidateJobBoard() {
     );
 
     return (
-        <div className="min-h-screen p-8 pt-28 text-white bg-[#050505]">
-            <div className="max-w-6xl mx-auto">
-                <header className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
-                    <div className="space-y-4">
-                        <div className="flex items-center gap-3 text-purple-400">
-                            <Briefcase className="w-5 h-5" />
-                            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Deployment Terminal</span>
-                        </div>
-                        <h1 className="text-5xl font-bold tracking-tight font-agale italic">Explore Opportunities</h1>
-                        <p className="text-white/40 text-lg font-light max-w-xl">
-                            Select a mission. Use our <span className="text-white font-medium">ATS Simulator</span> to verify your match before applying.
-                        </p>
+        <div>
+            <header className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12">
+                <div>
+                    <div className="flex items-center gap-2 text-[var(--primary)] text-xs font-bold uppercase tracking-[0.2em] mb-2">
+                        <Briefcase className="w-4 h-4" />
+                        Job Board
                     </div>
+                    <h1 className="text-5xl font-agale font-bold tracking-tighter text-[var(--foreground)]">
+                        Job Posts
+                    </h1>
+                </div>
 
-                    <div className="relative group w-full md:w-96">
-                        <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-white/20 group-focus-within:text-purple-400 transition-colors" />
-                        <input
-                            type="text"
-                            placeholder="Search missions..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-14 pr-6 text-white placeholder:text-white/10 focus:outline-none focus:border-purple-500/50 focus:bg-white/[0.08] transition-all"
-                        />
-                    </div>
-                </header>
+                <div className="relative group w-full md:w-96">
+                    <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--foreground)]/30 group-focus-within:text-[var(--primary)] transition-colors" />
+                    <input
+                        type="text"
+                        placeholder="Search for roles..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full bg-[var(--card-bg)] border border-[var(--card-border)] rounded-2xl py-4 pl-14 pr-6 text-[var(--foreground)] placeholder:text-[var(--foreground)]/20 focus:outline-none focus:border-[var(--primary)]/50 focus:shadow-[0_0_20px_rgba(0,232,255,0.1)] transition-all font-mono text-sm"
+                    />
+                </div>
+            </header>
 
-                {isLoading ? (
-                    <div className="flex flex-col items-center justify-center py-40 gap-4">
-                        <Loader2 className="w-10 h-10 text-purple-500 animate-spin" />
-                        <p className="text-white/20 text-xs font-bold uppercase tracking-widest">Scanning Network...</p>
-                    </div>
-                ) : filteredJobs.length === 0 ? (
-                    <div className="text-center py-40 border-2 border-dashed border-white/5 rounded-[3rem]">
-                        <p className="text-white/20 font-medium">No missions found matching your search parameters.</p>
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {filteredJobs.map((job, index) => (
-                            <motion.div
-                                key={job.id}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: index * 0.05 }}
-                                className="glass-panel p-8 rounded-[2.5rem] border border-white/10 hover:border-purple-500/30 transition-all group relative overflow-hidden"
-                            >
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-purple-600/5 blur-[50px] opacity-0 group-hover:opacity-100 transition-opacity" />
+            {isLoading ? (
+                <div className="flex flex-col items-center justify-center py-40 gap-4">
+                    <Loader2 className="w-10 h-10 text-[var(--primary)] animate-spin" />
+                    <p className="text-[var(--foreground)]/30 text-xs font-bold uppercase tracking-widest font-mono">Loading Opportunities...</p>
+                </div>
+            ) : filteredJobs.length === 0 ? (
+                <div className="text-center py-40 border-2 border-dashed border-[var(--card-border)] rounded-[3rem] bg-[var(--card-bg)]/30">
+                    <p className="text-[var(--foreground)]/30 font-mono">No active job posts found.</p>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20">
+                    {filteredJobs.map((job, index) => (
+                        <motion.div
+                            key={job.id}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.05 }}
+                            className="glass-panel p-8 rounded-[2rem] hover:border-[var(--primary)]/50 transition-all group relative overflow-hidden flex flex-col h-full"
+                        >
+                            {/* Technical Decoration */}
+                            <div className="absolute top-0 right-0 p-4 opacity-50">
+                                <Code className="w-12 h-12 text-[var(--foreground)]/5 rotate-12" />
+                            </div>
 
-                                <div className="flex justify-between items-start mb-6">
-                                    <h2 className="text-2xl font-bold text-white group-hover:text-purple-400 transition-colors pr-8">{job.title}</h2>
-                                    <div className="bg-white/5 p-2 rounded-xl border border-white/10">
-                                        <BrainCircuit className="w-5 h-5 text-purple-400" />
-                                    </div>
+                            <div className="mb-6">
+                                <div className="flex items-center gap-3 mb-3">
+                                    <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_10px_#10b981]" />
+                                    <span className="text-[10px] font-mono uppercase tracking-widest text-emerald-500">Active Hiring</span>
                                 </div>
+                                <h2 className="text-3xl font-bold text-[var(--foreground)] group-hover:text-[var(--primary)] transition-colors font-agale leading-tight">
+                                    {job.title}
+                                </h2>
+                            </div>
 
-                                <p className="text-white/40 text-sm mb-8 line-clamp-3 leading-relaxed">
-                                    {job.description}
-                                </p>
+                            <p className="text-[var(--foreground)]/50 text-sm mb-8 line-clamp-3 leading-relaxed flex-grow font-light">
+                                {job.description}
+                            </p>
 
-                                <div className="flex flex-wrap gap-2 mb-8">
-                                    {job.required_skills.slice(0, 4).map((skill, i) => (
-                                        <span key={i} className="px-3 py-1.5 bg-white/5 border border-white/5 rounded-lg text-[10px] font-bold text-white/50 uppercase tracking-widest">
-                                            {skill}
-                                        </span>
+                            <div className="space-y-6">
+                                {/* Tech Stack Grid */}
+                                <div className="flex flex-wrap gap-2">
+                                    {job.required_skills.slice(0, 5).map((skill, i) => (
+                                        <div key={i} className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--background)] border border-[var(--card-border)] rounded-md">
+                                            <div className="w-1 h-1 bg-[var(--foreground)]/20 rounded-full" />
+                                            <span className="text-[10px] font-bold text-[var(--foreground)]/60 uppercase tracking-wider font-mono">
+                                                {skill}
+                                            </span>
+                                        </div>
                                     ))}
-                                    {job.required_skills.length > 4 && (
-                                        <span className="px-3 py-1.5 text-[10px] font-bold text-white/20 uppercase tracking-widest">
-                                            +{job.required_skills.length - 4} more
-                                        </span>
-                                    )}
                                 </div>
 
                                 <button
                                     onClick={() => router.push(`/candidate/check?job_id=${job.id}`)}
-                                    className="w-full bg-white text-black font-black py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-purple-500 hover:text-white transition-all active:scale-[0.98]"
+                                    className="w-full group/btn relative overflow-hidden bg-[var(--foreground)] text-[var(--background)] font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-[var(--primary)] hover:text-white transition-all shadow-lg hover:shadow-[var(--primary)]/30"
                                 >
-                                    SIMULATE MATCH
-                                    <ArrowRight className="w-4 h-4" />
+                                    <span className="relative z-10 flex items-center gap-2">
+                                        APPLY NOW
+                                        <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                                    </span>
                                 </button>
-                            </motion.div>
-                        ))}
-                    </div>
-                )}
-            </div>
+                            </div>
+                        </motion.div>
+                    ))}
+                </div>
+            )}
         </div>
     );
 }

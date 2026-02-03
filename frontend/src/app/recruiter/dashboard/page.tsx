@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import Sidebar from '@/components/Sidebar';
 import CandidateCard from '@/components/dashboard/CandidateCard';
 import ReasoningModal from '@/components/dashboard/ReasoningModal';
-import { Sparkles, Filter, Search, RefreshCcw } from 'lucide-react';
+import { Sparkles, Filter, Search, RefreshCcw, TrendingUp, Users, Target } from 'lucide-react';
 import axios from 'axios';
 import { API_BASE } from '@/config';
+import { motion } from 'framer-motion';
 
 interface Candidate {
     id: number;
@@ -17,6 +17,28 @@ interface Candidate {
     skills: string[];
     explanation: string;
 }
+
+const StatCard = ({ icon: Icon, label, value, trend }: any) => (
+    <motion.div
+        whileHover={{ y: -5 }}
+        className="glass-panel p-6 rounded-3xl flex flex-col justify-between h-[160px]"
+    >
+        <div className="flex justify-between items-start">
+            <div className="p-3 bg-[var(--primary)]/10 rounded-2xl text-[var(--primary)]">
+                <Icon className="w-6 h-6" />
+            </div>
+            {trend && (
+                <span className="text-xs font-bold text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded-full">
+                    {trend}
+                </span>
+            )}
+        </div>
+        <div>
+            <h3 className="text-4xl font-agale font-bold text-[var(--foreground)] tracking-tight">{value}</h3>
+            <p className="text-[var(--foreground)]/50 text-xs font-mono tracking-widest uppercase mt-1">{label}</p>
+        </div>
+    </motion.div>
+);
 
 export default function RecruiterDashboard() {
     const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -59,63 +81,84 @@ export default function RecruiterDashboard() {
     };
 
     const columns = [
-        { id: 'selected', title: 'Highly Compatible', icon: '✨', color: 'bg-emerald-500/10' },
-        { id: 'under recruiter review', title: 'Review Needed', icon: '👀', color: 'bg-amber-500/10' },
-        { id: 'rejected', title: 'Not a Match', icon: '📁', color: 'bg-rose-500/10' },
+        { id: 'selected', title: 'Highly Compatible', icon: '✨', color: 'border-emerald-500/20 bg-emerald-500/5' },
+        { id: 'under recruiter review', title: 'Review Needed', icon: '👀', color: 'border-amber-500/20 bg-amber-500/5' },
+        { id: 'rejected', title: 'Not a Match', icon: '📁', color: 'border-rose-500/20 bg-rose-500/5' },
     ];
 
     return (
-        <div className="bg-[#050505] min-h-screen text-white font-sans selection:bg-purple-500/30 pl-64">
-            <main className="p-10">
-                {/* Header Area */}
-                <div className="flex justify-between items-center mb-12">
-                    <div>
-                        <div className="flex items-center gap-2 text-purple-400 text-xs font-bold uppercase tracking-[0.2em] mb-2">
-                            <Sparkles className="w-4 h-4" />
-                            AI Powered Insights
-                        </div>
-                        <h1 className="text-4xl font-black tracking-tighter">Smart Inbox</h1>
+        <div className="font-sans">
+            {/* Header Section */}
+            <header className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
+                <div>
+                    <div className="flex items-center gap-2 text-[var(--primary)] text-xs font-bold uppercase tracking-[0.2em] mb-2">
+                        <Sparkles className="w-4 h-4" />
+                        Command Center
                     </div>
-
-                    <div className="flex gap-4">
-                        <div className="relative group">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 group-focus-within:text-purple-400 transition-colors" />
-                            <input
-                                type="text"
-                                placeholder="Search candidates..."
-                                className="bg-white/5 border border-white/10 rounded-2xl pl-12 pr-6 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500/40 w-64 transition-all"
-                            />
-                        </div>
-                        <button
-                            onClick={fetchCandidates}
-                            className="p-3 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-all active:scale-95"
-                        >
-                            <RefreshCcw className={`w-5 h-5 ${isLoading ? 'animate-spin text-purple-400' : 'text-white/50'}`} />
-                        </button>
-                    </div>
+                    <h1 className="text-5xl font-agale font-bold tracking-tighter text-[var(--foreground)]">
+                        Talent Matrix
+                    </h1>
                 </div>
 
-                {/* Candidate Columns */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-[calc(100vh-250px)]">
-                    {columns.map((col) => (
+                <div className="flex gap-4">
+                    <div className="relative group">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--foreground)]/30 group-focus-within:text-[var(--primary)] transition-colors" />
+                        <input
+                            type="text"
+                            placeholder="Search vector database..."
+                            className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-2xl pl-12 pr-6 py-3 text-sm focus:outline-none focus:border-[var(--primary)] w-64 transition-all"
+                        />
+                    </div>
+                    <button
+                        onClick={fetchCandidates}
+                        className="p-3 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-2xl hover:bg-[var(--foreground)]/5 transition-all active:scale-95"
+                    >
+                        <RefreshCcw className={`w-5 h-5 ${isLoading ? 'animate-spin text-[var(--primary)]' : 'text-[var(--foreground)]/50'}`} />
+                    </button>
+                </div>
+            </header>
+
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+                <StatCard icon={Users} label="Total Candidates" value={candidates.length} trend="+12%" />
+                <StatCard icon={TrendingUp} label="Avg Match Score" value="84%" trend="+5%" />
+                <StatCard icon={Target} label="Positions Active" value="8" />
+
+                {/* Action Card */}
+                <motion.div
+                    whileHover={{ scale: 1.02 }}
+                    className="glass-panel p-6 rounded-3xl flex flex-col justify-center items-center text-center cursor-pointer border border-[var(--primary)]/30 bg-[var(--primary)]/5"
+                >
+                    <div className="w-12 h-12 bg-[var(--primary)] rounded-full flex items-center justify-center text-white mb-3 shadow-lg shadow-[var(--primary)]/30">
+                        <Sparkles className="w-6 h-6" />
+                    </div>
+                    <h3 className="font-bold text-[var(--foreground)]">Auto-Screen</h3>
+                    <p className="text-xs text-[var(--foreground)]/50 mt-1">Process New Batch</p>
+                </motion.div>
+            </div>
+
+            {/* Main Kanban Board (Bento Layout) */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-240px)]">
+                {columns.map((col) => {
+                    const colCandidates = candidates.filter(c => c.status === col.id);
+                    return (
                         <div key={col.id} className="flex flex-col h-full">
+                            {/* Column Header */}
                             <div className="flex items-center justify-between mb-6 px-2">
                                 <div className="flex items-center gap-3">
-                                    <span className="text-xl">{col.icon}</span>
-                                    <h2 className="text-sm font-black uppercase tracking-widest text-white/70">
+                                    <span className="text-xl filter grayscale opacity-80">{col.icon}</span>
+                                    <h2 className="text-sm font-black uppercase tracking-widest text-[var(--foreground)]/70">
                                         {col.title}
                                     </h2>
-                                    <span className="px-2 py-0.5 bg-white/5 rounded-full text-[10px] text-white/40 font-bold">
-                                        {candidates.filter(c => c.status === col.id).length}
+                                    <span className="px-2 py-0.5 bg-[var(--foreground)]/5 rounded-full text-[10px] text-[var(--foreground)]/60 font-bold border border-[var(--card-border)]">
+                                        {colCandidates.length}
                                     </span>
                                 </div>
-                                <button className="p-1 hover:bg-white/5 rounded-lg transition-colors">
-                                    <Filter className="w-4 h-4 text-white/20" />
-                                </button>
                             </div>
 
-                            <div className={`flex-1 rounded-3xl ${col.color} border border-white/[0.03] p-4 overflow-y-auto space-y-4 custom-scrollbar`}>
-                                {candidates.filter(c => c.status === col.id).map((cand) => (
+                            {/* Column Content */}
+                            <div className={`flex-1 rounded-3xl border ${col.color} p-4 overflow-y-auto space-y-4 custom-scrollbar backdrop-blur-sm transition-colors hover:bg-opacity-10`}>
+                                {colCandidates.map((cand) => (
                                     <CandidateCard
                                         key={cand.id}
                                         candidate={cand}
@@ -128,39 +171,23 @@ export default function RecruiterDashboard() {
                                     />
                                 ))}
 
-                                {candidates.filter(c => c.status === col.id).length === 0 && (
-                                    <div className="h-full flex flex-col items-center justify-center text-center opacity-20">
-                                        <div className="w-12 h-12 bg-white/10 rounded-full mb-4 animate-pulse" />
-                                        <p className="text-xs font-bold uppercase tracking-widest">No entries</p>
+                                {colCandidates.length === 0 && (
+                                    <div className="h-48 flex flex-col items-center justify-center text-center opacity-30">
+                                        <div className="w-12 h-12 bg-[var(--foreground)]/10 rounded-full mb-4 animate-pulse" />
+                                        <p className="text-xs font-bold uppercase tracking-widest">Awaiting Data</p>
                                     </div>
                                 )}
                             </div>
                         </div>
-                    ))}
-                </div>
-            </main>
+                    );
+                })}
+            </div>
 
             <ReasoningModal
                 candidate={selectedCand}
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
             />
-
-            <style jsx global>{`
-                .custom-scrollbar::-webkit-scrollbar {
-                    width: 4px;
-                }
-                .custom-scrollbar::-webkit-scrollbar-track {
-                    background: transparent;
-                }
-                .custom-scrollbar::-webkit-scrollbar-thumb {
-                    background: rgba(255, 255, 255, 0.05);
-                    border-radius: 10px;
-                }
-                .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-                    background: rgba(255, 255, 255, 0.1);
-                }
-            `}</style>
         </div>
     );
 }

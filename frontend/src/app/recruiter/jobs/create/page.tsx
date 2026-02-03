@@ -33,7 +33,7 @@ export default function CreateJobPage() {
 
     if (success) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-[#050505] p-6">
+            <div className="min-h-screen flex items-center justify-center bg-[var(--background)] p-6">
                 <motion.div
                     initial={{ scale: 0.9, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
@@ -42,31 +42,31 @@ export default function CreateJobPage() {
                     <div className="w-20 h-20 bg-emerald-500/10 rounded-3xl flex items-center justify-center mx-auto mb-8">
                         <CheckCircle2 className="w-10 h-10 text-emerald-400" />
                     </div>
-                    <h2 className="text-2xl font-bold text-white mb-4">Protocol Established</h2>
-                    <p className="text-white/40 text-sm leading-relaxed">Job listing deployed to the global talent pool. Redirecting to terminal...</p>
+                    <h2 className="text-2xl font-bold text-[var(--foreground)] mb-4 font-agale">Job Published</h2>
+                    <p className="text-[var(--foreground)]/40 text-sm leading-relaxed font-mono">Job listing is now active in the candidate pool. Redirecting to dashboard...</p>
                 </motion.div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen p-8 pt-28 text-white bg-[#050505]">
+        <div className="min-h-screen p-8 pt-28 text-[var(--foreground)] bg-[var(--background)] font-sans">
             <div className="max-w-3xl mx-auto">
                 <header className="mb-12">
-                    <div className="flex items-center gap-4 mb-4 text-purple-400">
-                        <div className="p-3 bg-purple-500/10 rounded-2xl border border-purple-500/20">
+                    <div className="flex items-center gap-4 mb-4 text-[var(--primary)]">
+                        <div className="p-3 bg-[var(--primary)]/10 rounded-2xl border border-[var(--primary)]/20">
                             <Briefcase className="w-6 h-6" />
                         </div>
-                        <h3 className="text-[10px] font-black uppercase tracking-[0.2em]">New Assignment</h3>
+                        <h3 className="text-[10px] font-black uppercase tracking-[0.2em]">New Job Post</h3>
                     </div>
-                    <h1 className="text-4xl font-bold tracking-tight mb-4 font-agale italic">Agentic Job Creation</h1>
-                    <p className="text-white/40 text-lg font-light">Describe the mission. Our AI will handle the screening.</p>
+                    <h1 className="text-4xl font-bold tracking-tight mb-4 font-agale italic">Create New Job</h1>
+                    <p className="text-[var(--foreground)]/40 text-lg font-light font-mono">Define role requirements. Our AI will handle the screening.</p>
                 </header>
 
                 <form onSubmit={handleSubmit} className="space-y-8">
-                    <div className="glass-panel p-8 rounded-[2rem] border border-white/10 space-y-6">
+                    <div className="glass-panel p-8 rounded-[2rem] border border-[var(--card-border)] space-y-6">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 ml-1 inline-flex items-center gap-2">
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--foreground)]/30 ml-1 inline-flex items-center gap-2">
                                 <Sparkles className="w-3 h-3" /> Job Title
                             </label>
                             <input
@@ -74,13 +74,13 @@ export default function CreateJobPage() {
                                 required
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
-                                placeholder="E.g. Senior Backend Operative (Python/Go)"
-                                className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-white placeholder:text-white/10 focus:outline-none focus:border-purple-500/50 focus:bg-white/[0.08] transition-all text-lg font-medium"
+                                placeholder="E.g. Senior Backend Engineer"
+                                className="w-full bg-[var(--background)] border border-[var(--card-border)] rounded-2xl p-5 text-[var(--foreground)] placeholder:text-[var(--foreground)]/10 focus:outline-none focus:border-[var(--primary)]/50 focus:bg-[var(--foreground)]/5 transition-all text-lg font-medium"
                             />
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 ml-1 inline-flex items-center gap-2">
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--foreground)]/30 ml-1 inline-flex items-center gap-2">
                                 <FileText className="w-3 h-3" /> Technical Requirements
                             </label>
                             <textarea
@@ -88,8 +88,8 @@ export default function CreateJobPage() {
                                 rows={8}
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
-                                placeholder="Detail the technical stack, mission objectives, and candidate expectations..."
-                                className="w-full bg-white/5 border border-white/10 rounded-3xl p-6 text-white placeholder:text-white/10 focus:outline-none focus:border-purple-500/50 focus:bg-white/[0.08] transition-all leading-relaxed"
+                                placeholder="Detail the technical stack, responsibilities, and candidate expectations..."
+                                className="w-full bg-[var(--background)] border border-[var(--card-border)] rounded-3xl p-6 text-[var(--foreground)] placeholder:text-[var(--foreground)]/10 focus:outline-none focus:border-[var(--primary)]/50 focus:bg-[var(--foreground)]/5 transition-all leading-relaxed"
                             />
                         </div>
                     </div>
@@ -109,13 +109,13 @@ export default function CreateJobPage() {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="flex-1 bg-white text-black font-black py-5 rounded-2xl flex items-center justify-center gap-3 hover:bg-white/90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:scale-100"
+                            className="flex-1 bg-[var(--foreground)] text-[var(--background)] font-black py-5 rounded-2xl flex items-center justify-center gap-3 hover:bg-[var(--primary)] hover:text-white active:scale-[0.98] transition-all disabled:opacity-50 disabled:scale-100 shadow-xl hover:shadow-[var(--primary)]/20"
                         >
                             {isLoading ? (
                                 <Loader2 className="w-6 h-6 animate-spin" />
                             ) : (
                                 <>
-                                    DEPLOY TO POOL
+                                    PUBLISH JOB
                                     <Send className="w-5 h-5" />
                                 </>
                             )}
@@ -123,7 +123,7 @@ export default function CreateJobPage() {
                         <button
                             type="button"
                             onClick={() => router.back()}
-                            className="px-10 py-5 rounded-2xl border border-white/10 text-white/40 font-bold hover:bg-white/5 transition-all"
+                            className="px-10 py-5 rounded-2xl border border-[var(--card-border)] text-[var(--foreground)]/40 font-bold hover:bg-[var(--foreground)]/5 transition-all"
                         >
                             ABORT
                         </button>
