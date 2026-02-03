@@ -18,11 +18,24 @@ if firebase_creds_json:
         creds_dict = json.loads(firebase_creds_json)
         cred = credentials.Certificate(creds_dict)
         firebase_admin.initialize_app(cred)
+        print("✅ Firebase Admin initialized via environment variable.")
     except Exception as e:
-        print(f"Error initializing Firebase Admin: {e}")
-elif os.path.exists("service-account.json"):
-    cred = credentials.Certificate("service-account.json")
-    firebase_admin.initialize_app(cred)
+        print(f"❌ Error initializing Firebase Admin: {e}")
+else:
+    # Local fallback
+    local_creds = "service-account.json"
+    if not os.path.exists(local_creds):
+        local_creds = os.path.join("backend", "service-account.json")
+    
+    if os.path.exists(local_creds):
+        try:
+            cred = credentials.Certificate(local_creds)
+            firebase_admin.initialize_app(cred)
+            print(f"✅ Firebase Admin initialized via local file: {local_creds}")
+        except Exception as e:
+            print(f"❌ Error initializing Firebase Admin via local file: {e}")
+    else:
+        print("⚠️ Warning: Firebase Admin not initialized. Role-based features may fail.")
 
 SECRET_KEY = os.getenv("SECRET_KEY", "supersecretkey")
 ALGORITHM = "HS256"
