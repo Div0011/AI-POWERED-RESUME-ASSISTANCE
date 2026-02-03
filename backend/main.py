@@ -65,7 +65,11 @@ app = FastAPI(title="GET IT! - AI Powered Resume screening API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:3000",
+        "https://div0011.github.io",
+        "https://div0011.github.io/AI-POWERED-RESUME-ASSISTANCE"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

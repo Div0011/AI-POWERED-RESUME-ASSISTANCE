@@ -37,11 +37,13 @@ The application is strictly governed by **Role-Based Access Control (RBAC)**, en
     2.  **Token Issuance**: The JWT payload contains the user's `sub` (email) and the response includes their `role`.
     3.  **Client-Side Persistence**: `AuthContext.tsx` stores the token and role in `localStorage` for UI state and `document.cookie` for server-side middleware.
 
-### **B. Middleware Security (Next.js)**
-*   **File**: `frontend/src/middleware.ts`.
-*   **Logic**: Before a page renders, the middleware checks for a `token` and `role` cookie.
-    *   If a Candidate tries to access `/recruiter/*`, they are redirected to `/candidate/check`.
-    *   If an Unauthenticated user tries to access protected routes, they are sent to `/login`.
+### **B. Client-Side RBAC (Route Guards)**
+*   **File**: `frontend/src/components/ClientLayoutWrapper.tsx`.
+*   **Logic**: Due to Static Site Generation (SSG) constraints, routing logic runs in the browser.
+    *   **Hook**: `useAuth()` provides the current user state.
+    *   **Effect**: A `useEffect` listener monitors the URL path.
+        *   If a Candidate tries to access `/recruiter/*`, they are immediately pushed to `/candidate/check`.
+        *   If an Unauthenticated user tries to access protected routes, they are pushed to `/login`.
 
 ### **C. Backend Router Security (FastAPI Dependencies)**
 *   **RoleChecker**: A custom class in `backend/auth.py` used as a FastAPI dependency.
@@ -58,7 +60,11 @@ The application is strictly governed by **Role-Based Access Control (RBAC)**, en
 ### **A. Recruiter Portal (`/recruiter/*`)**
 1.  **Dashboard**: Central hub for managing job posts and candidates.
 2.  **Job Creation (`/recruiter/jobs/create`)**:
-    *   **Workflow**: Recruiter enters a JD -> DB stores it -> LLM extracts required skills -> Listing becomes live for the world.
+    *   **Workflow**: Recruiter enters a JD -> DB stores it.
+    *   **Automatic Intelligence**: 
+        *   **Requirement Extraction**: Gemini 2.0 extracts skills.
+        *   **Vectorization**: `sentence-transformers` creates a 384-dim embedding.
+        *   **Instant Match**: A background worker immediately scans *all* existing candidates for high-similarity matches and notifies the recruiter.
 3.  **Talent Pool**: Searchable database of all candidates who have applied or matched.
 4.  **Analytics**: Secured view of pipeline health.
 
@@ -134,6 +140,6 @@ The application is strictly governed by **Role-Based Access Control (RBAC)**, en
 ---
 
 ## 6. Known Limitations & Future Work
--   **Mock Data**: The "Smart Inbox" and "Interview Chat" currently use hardcoded simulation logic (setTimeout) for the MVP demo. connecting them to real Gmail API and OpenAI Realtime API is the next step.
+-   **Email Polling**: The system polls Gmail every 60 seconds (using Celery beat).
 -   **Resume Parsing Accuracy**: PDF tables can sometimes confuse the parser.
 -   **Bias**: The system relies on keyword/semantic matches, which can bias against non-traditional backgrounds if not carefully prompted.

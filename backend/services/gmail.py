@@ -31,24 +31,59 @@ class GmailService:
         """Initializes the Gmail API service."""
         creds = None
         token_path = 'token.pickle'
-        creds_path = 'credentials.json.json' # Using the user's specific filename
+        creds_path = 'credentials.json.json'
 
-        if os.path.exists(token_path):
+        # 1. Try Loading from Environment Variables (Production)
+        env_token = os.getenv("GMAIL_TOKEN_JSON")
+        env_creds = os.getenv("GMAIL_CREDENTIALS_JSON")
+
+        if env_token:
+            # Parse token directly from JSON string in env
+            try:
+                token_data = json.loads(env_token)
+                # Reconstruct Credentials object from JSON data
+                creds = Credentials.from_authorized_user_info(token_data, SCOPES)
+            except Exception as e:
+                logger.error(f"Failed to load token from environment: {e}")
+
+        # 2. Fallback to Local File (Development)
+        if not creds and os.path.exists(token_path):
             with open(token_path, 'rb') as token:
-                creds = pickle.load(token)
+                try:
+                    creds = pickle.load(token)
+                except Exception:
+                    pass
         
-        # If there are no (valid) credentials available, let the user log in.
+        # 3. If no valid credentials, log in (Local Dev Only)
         if not creds or not creds.valid:
             if creds and creds.expired and creds.refresh_token:
-                creds.refresh(Request())
-            else:
-                flow = InstalledAppFlow.from_client_secrets_file(creds_path, SCOPES)
-                # This will print the URL to the terminal
-                creds = flow.run_local_server(port=8000)
-            
-            # Save the credentials for the next run
-            with open(token_path, 'wb') as token:
-                pickle.dump(creds, token)
+                try:
+                    creds.refresh(Request())
+                except Exception as e:
+                    logger.error(f"Error refreshing token: {e}")
+                    creds = None
+
+            if not creds:
+                if env_creds:
+                    # Write env creds to temp file for flow
+                    with open("temp_creds.json", "w") as f:
+                        f.write(env_creds)
+                    flow = InstalledAppFlow.from_client_secrets_file("temp_creds.json", SCOPES)
+                elif os.path.exists(creds_path):
+                    flow = InstalledAppFlow.from_client_secrets_file(creds_path, SCOPES)
+                else:
+                    logger.warning("No credentials found. Gmail service will fail.")
+                    return
+
+                # Only run local server if we are truly local (not in production env without token)
+                # In production, we MUST have the token in env.
+                if not os.getenv("RENDER"): 
+                    creds = flow.run_local_server(port=8000)
+                    with open(token_path, 'wb') as token:
+                        pickle.dump(creds, token)
+                else:
+                     logger.error("Cannot perform OAuth flow in production. Set GMAIL_TOKEN_JSON.")
+                     return
 
         try:
             cls._service = build('gmail', 'v1', credentials=creds)
