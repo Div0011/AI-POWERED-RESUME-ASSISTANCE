@@ -58,10 +58,21 @@ export default function InterviewPage() {
 
     const startInterview = async () => {
         setIsThinking(true);
+        // Retrieve context from storage
+        const storedResume = localStorage.getItem('resume_text');
+        const storedJobId = localStorage.getItem('job_id');
+
+        const resumeToUse = storedResume || "Experience in Cyber Security, Python, Nmap, worked on vulnerability assessment.";
+        const jobIdToUse = storedJobId ? parseInt(storedJobId) : 1;
+
+        if (!storedResume) {
+            console.warn("No resume found in storage, using default.");
+        }
+
         try {
             const res = await axios.post(`${API_BASE}/interview/start`, {
-                job_id: 1,
-                resume_text: "Experience in Cyber Security, Python, Nmap, worked on vulnerability assessment."
+                job_id: jobIdToUse,
+                resume_text: resumeToUse
             });
             const firstQuestion = res.data.next_question;
             setMessages([{ role: 'interviewer', content: firstQuestion }]);
@@ -82,10 +93,15 @@ export default function InterviewPage() {
         setUserInput("");
         setIsThinking(true);
 
+        const storedResume = localStorage.getItem('resume_text');
+        const storedJobId = localStorage.getItem('job_id');
+        const resumeToUse = storedResume || "Experience in Cyber Security, Python, Nmap, worked on vulnerability assessment.";
+        const jobIdToUse = storedJobId ? parseInt(storedJobId) : 1;
+
         try {
             const res = await axios.post(`${API_BASE}/interview/respond`, {
-                job_id: 1,
-                resume_text: "Experience in Cyber Security, Python, Nmap, worked on vulnerability assessment.",
+                job_id: jobIdToUse,
+                resume_text: resumeToUse,
                 history: newMessages
             });
             const nextQ = res.data.next_question;

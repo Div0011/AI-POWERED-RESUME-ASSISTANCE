@@ -76,8 +76,10 @@ app.add_middleware(
 )
 
 # 6. Routers
-from routers import auth, jobs, feedback, candidates, candidate, analytics, interview
-app.include_router(auth.router, prefix="/auth", tags=["auth"])
+# 6. Routers
+from routers import auth as auth_router, jobs, feedback, candidates, candidate, analytics, interview
+import auth
+app.include_router(auth_router.router, prefix="/auth", tags=["auth"])
 app.include_router(jobs.router, prefix="/jobs", tags=["jobs"])
 app.include_router(feedback.router, prefix="/feedback", tags=["feedback"])
 app.include_router(candidates.router, prefix="/candidates", tags=["candidates"])

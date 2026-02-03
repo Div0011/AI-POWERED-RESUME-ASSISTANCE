@@ -3,14 +3,40 @@ from sqlalchemy.orm import Session
 from database import get_db
 import models
 import schemas, auth
+
 from services.matching import rank_candidate
 from services.embedding import EmbeddingService
 from services.resume_builder import ResumeBuilder
 from services.analyzer import RequirementAnalyzer
+from parser import parse_resume
 import datetime
+import os
+import shutil
 from loguru import logger
 
 router = APIRouter(dependencies=[Depends(auth.get_current_user)])
+
+@router.post("/parse")
+async def parse_resume_content(file: UploadFile = File(...)):
+    """
+    Parses an uploaded resume file and returns the text.
+    """
+    try:
+        os.makedirs("uploads", exist_ok=True)
+        file_path = f"uploads/{file.filename}"
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        
+        # Parse
+        text = parse_resume(file_path)
+        
+        # Cleanup
+        os.remove(file_path)
+        
+        return {"filename": file.filename, "text": text}
+    except Exception as e:
+        logger.error(f"Error parsing file: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to parse file: {str(e)}")
 
 @router.post("/simulate", response_model=schemas.SimulationResponse)
 def simulate_ats(req: schemas.SimulationRequest, db: Session = Depends(get_db)):

@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Upload, FileText, Play, AlertCircle, CheckCircle2, Loader2, Save, Terminal, FileCode, Cpu } from 'lucide-react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import axios from 'axios';
 import { API_BASE } from '@/config';
 
@@ -14,11 +15,34 @@ export default function CandidateCheckPage() {
     const [error, setError] = useState("");
     const [activeTab, setActiveTab] = useState<'source' | 'output'>('source');
 
+    const searchParams = useSearchParams();
+    const router = useRouter();
+    const jobId = searchParams.get('job_id') || "1"; // Default to ID 1 if not set
+
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const uploadedFile = e.target.files?.[0];
         if (uploadedFile) {
             setFile(uploadedFile);
-            setResumeText("Experience: 2 years Python developer, worked with Nmap and Wireshark. Knowledge of OWASP Top 10.");
+            setResumeText("Parsing file... please wait...");
+
+            try {
+                const formData = new FormData();
+                formData.append('file', uploadedFile);
+
+                const res = await axios.post(`${API_BASE}/candidate/parse`, formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+
+                const parsedText = res.data.text;
+                setResumeText(parsedText);
+                // Save to local storage for Interview Context
+                localStorage.setItem('resume_text', parsedText);
+                localStorage.setItem('job_id', jobId.toString());
+
+            } catch (err) {
+                console.error(err);
+                setResumeText("// Error parsing file. Please try again or paste text manually.");
+            }
         }
     };
 
@@ -28,8 +52,8 @@ export default function CandidateCheckPage() {
         setActiveTab('output'); // Auto switch to output on run
         try {
             const res = await axios.post(`${API_BASE}/candidate/simulate`, {
-                resume_text: resumeText || "Sample resume text for Cyber Security Intern",
-                job_id: 1
+                resume_text: resumeText,
+                job_id: parseInt(jobId.toString())
             });
             setResults(res.data);
         } catch (err: any) {
@@ -164,7 +188,7 @@ export default function CandidateCheckPage() {
                                 </div>
 
                                 <button
-                                    onClick={() => window.location.href = '/candidate/interview'}
+                                    onClick={() => router.push('/candidate/interview')}
                                     className="w-full py-4 border border-[var(--card-border)] rounded-xl hover:bg-[var(--foreground)]/5 transition-colors text-[var(--foreground)]/60 hover:text-[var(--primary)] uppercase tracking-widest text-xs font-bold"
                                 >
                                     Initialize Interview Protocol &gt;_
