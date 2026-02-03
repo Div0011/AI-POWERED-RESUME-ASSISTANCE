@@ -129,3 +129,17 @@ async def submit_candidate_async(
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=8000)
+
+# 9. Development Mode Bypass logic
+if os.getenv("DEV_MODE") == "true":
+    logger.warning("🚧 DEV_MODE is ACTIVE: Authentication is BYPASSED 🚧")
+    
+    class MockUser:
+        id = 1
+        email = "dev@mowglai.in"
+        role = "recruiter" # Default to recruiter to access dashboard
+        
+    async def mock_get_current_user():
+        return MockUser()
+        
+    app.dependency_overrides[auth.get_current_user] = mock_get_current_user

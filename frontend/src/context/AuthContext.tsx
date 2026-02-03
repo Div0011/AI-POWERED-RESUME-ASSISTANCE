@@ -29,6 +29,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const router = useRouter();
 
     useEffect(() => {
+        // 0. Development Mode Bypass
+        if (process.env.NEXT_PUBLIC_DEV_MODE === 'true') {
+            setToken("dev-token");
+            setUser({ email: 'dev@mowglai.in', role: 'recruiter' });
+            axios.defaults.headers.common['Authorization'] = `Bearer dev-token`;
+            setIsLoading(false);
+            return;
+        }
+
         const savedToken = localStorage.getItem('token');
         const savedRole = localStorage.getItem('role') as 'candidate' | 'recruiter';
         const savedEmail = localStorage.getItem('email');

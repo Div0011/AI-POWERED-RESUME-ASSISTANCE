@@ -16,6 +16,11 @@ export const ClientLayoutWrapper = ({ children }: { children: React.ReactNode })
     const showSidebar = pathname.startsWith('/recruiter') || pathname.startsWith('/candidate');
 
     useEffect(() => {
+        // 0. Development Mode Bypass
+        if (process.env.NEXT_PUBLIC_DEV_MODE === 'true') {
+            return;
+        }
+
         if (isLoading) return;
 
         // 1. Redirect unauthenticated users
