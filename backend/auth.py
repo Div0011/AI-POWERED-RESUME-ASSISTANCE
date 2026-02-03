@@ -1,18 +1,33 @@
 from datetime import datetime, timedelta
 from typing import Optional
+import os
+import json
+import firebase_admin
+from firebase_admin import auth as firebase_auth, credentials
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 import models, database
-import os
+
+# 1. Initialize Firebase Admin
+firebase_creds_json = os.getenv("FIREBASE_SERVICE_ACCOUNT_JSON")
+if firebase_creds_json:
+    try:
+        creds_dict = json.loads(firebase_creds_json)
+        cred = credentials.Certificate(creds_dict)
+        firebase_admin.initialize_app(cred)
+    except Exception as e:
+        print(f"Error initializing Firebase Admin: {e}")
+elif os.path.exists("service-account.json"):
+    cred = credentials.Certificate("service-account.json")
+    firebase_admin.initialize_app(cred)
 
 SECRET_KEY = os.getenv("SECRET_KEY", "supersecretkey")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-# Using pbkdf2_sha256 because bcrypt has issues with password length in this environment
 pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
@@ -21,7 +36,6 @@ def get_password_hash(password):
 
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
-
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
@@ -39,18 +53,42 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
+    
+    # 2. Try Firebase Verification First
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        email: str = payload.get("sub")
-        if email is None:
-            raise credentials_exception
-    except JWTError:
-        raise credentials_exception
-        
-    user = db.query(models.User).filter(models.User.email == email).first()
-    if user is None:
-        raise credentials_exception
-    return user
+        decoded_token = firebase_auth.verify_id_token(token)
+        email = decoded_token.get("email")
+        if email:
+            user = db.query(models.User).filter(models.User.email == email).first()
+            if not user:
+                # Sync User to Local DB
+                role = decoded_token.get("role", "candidate") # Default role
+                user = models.User(email=email, role=role)
+                db.add(user)
+                db.commit()
+                db.refresh(user)
+            return user
+    except Exception:
+        # 3. Fallback to Local JWT if Firebase Fails
+        try:
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            email: str = payload.get("sub")
+            if email:
+                user = db.query(models.User).filter(models.User.email == email).first()
+                if user:
+                    return user
+        except JWTError:
+            pass
+            
+    raise credentials_exception
+
+def set_user_role_claim(uid: str, role: str):
+    try:
+        firebase_auth.set_custom_user_claims(uid, {"role": role})
+        return True
+    except Exception as e:
+        print(f"Error setting custom claims: {e}")
+        return False
 
 class RoleChecker:
     def __init__(self, required_role: str):

@@ -138,6 +138,34 @@ export default function SignupPage() {
                                 </>
                             )}
                         </button>
+
+                        <div className="relative my-8">
+                            <div className="absolute inset-0 flex items-center">
+                                <div className="w-full border-t border-white/5"></div>
+                            </div>
+                            <div className="relative flex justify-center text-[10px] uppercase tracking-widest font-bold">
+                                <span className="bg-[#050505] px-4 text-white/20 italic">Encrypted Handshake</span>
+                            </div>
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={async () => {
+                                setIsLoading(true);
+                                try {
+                                    const { signupWithGoogle } = useAuth();
+                                    await signupWithGoogle(role);
+                                } catch (err: any) {
+                                    setError("Google Signup failed.");
+                                } finally {
+                                    setIsLoading(false);
+                                }
+                            }}
+                            className="w-full bg-white/5 border border-white/10 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-3 hover:bg-white/10 hover:border-white/20 transition-all active:scale-[0.98]"
+                        >
+                            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5" alt="Google" />
+                            Join with Google
+                        </button>
                     </form>
 
                     <div className="mt-8 text-center text-sm font-medium">

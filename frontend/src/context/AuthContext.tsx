@@ -14,6 +14,8 @@ interface AuthContextType {
     user: User | null;
     token: string | null;
     login: (token: string, role: string, email: string) => void;
+    signInWithGoogle: () => Promise<void>;
+    signupWithGoogle: (role: string) => Promise<void>;
     logout: () => void;
     isLoading: boolean;
 }
@@ -63,6 +65,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
+    const signInWithGoogle = async () => {
+        try {
+            const { auth, googleProvider } = await import('@/lib/firebase');
+            const { signInWithPopup } = await import('firebase/auth');
+            const result = await signInWithPopup(auth, googleProvider);
+            const idToken = await result.user.getIdToken();
+            const email = result.user.email || "";
+
+            // Call backend to verify and get user role
+            const res = await axios.post(`${API_BASE}/auth/google-login`, { token: idToken });
+            login(idToken, res.data.role, email);
+        } catch (error) {
+            console.error("Google Sign-in Error:", error);
+            throw error;
+        }
+    };
+
+    const signupWithGoogle = async (role: string) => {
+        try {
+            const { auth, googleProvider } = await import('@/lib/firebase');
+            const { signInWithPopup } = await import('firebase/auth');
+            const result = await signInWithPopup(auth, googleProvider);
+            const idToken = await result.user.getIdToken();
+            const email = result.user.email || "";
+
+            // Call backend to set role and sync user
+            const res = await axios.post(`${API_BASE}/auth/google-signup`, { token: idToken, role });
+            login(idToken, role, email);
+        } catch (error) {
+            console.error("Google Signup Error:", error);
+            throw error;
+        }
+    };
+
     const logout = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('role');
@@ -80,7 +116,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     return (
-        <AuthContext.Provider value={{ user, token, login, logout, isLoading }}>
+        <AuthContext.Provider value={{ user, token, login, signInWithGoogle, signupWithGoogle, logout, isLoading }}>
             {children}
         </AuthContext.Provider>
     );

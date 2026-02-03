@@ -17,6 +17,7 @@ backend/token.json
 backend/*.json.json
 token.pickle
 token.json
+service-account.json
 *.json.json
 .vscode/
 temp_processing/

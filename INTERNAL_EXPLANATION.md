@@ -53,6 +53,12 @@ The application is strictly governed by **Role-Based Access Control (RBAC)**, en
     ```
 *   **Enforcement**: This ensures that even if a user bypasses the frontend, the API will return a `403 Forbidden` if the role doesn't match.
 
+### **D. Firebase Authentication & Custom Claims**
+*   **The Upgrade**: We've transitioned to **Google Sign-In** via Firebase for premium security.
+*   **Tamper-Proof RBAC**: Roles are now "burned" directly into the user's Google token using **Firebase Custom Claims**. 
+*   **Verification**: The backend validates the `Firebase ID Token` using the official `firebase-admin` SDK. This ensures that a user's role cannot be spoofed by modifying local storage or cookies.
+*   **Persistence**: Even though we use Google, we sync the user's email and role to our local SQL database to maintain relationships with Jobs and Resumes.
+
 ---
 
 ## 3. Ecosystem Deep Dives

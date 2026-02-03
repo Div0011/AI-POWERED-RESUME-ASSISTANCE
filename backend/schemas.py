@@ -10,6 +10,13 @@ class LoginRequest(BaseModel):
     email: EmailStr
     password: str
 
+class GoogleLoginRequest(BaseModel):
+    token: str
+
+class GoogleSignupRequest(BaseModel):
+    token: str
+    role: str
+
 class UserResponse(BaseModel):
     id: int
     email: EmailStr
