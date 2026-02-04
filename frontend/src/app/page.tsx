@@ -50,12 +50,19 @@ export default function Home() {
       <motion.div
         initial={{ top: "50%", left: "50%", x: "-50%", y: "-50%", fontSize: "20vw" }}
         animate={phase >= 1 ? { top: "20px", left: "20px", x: "0%", y: "0%", fontSize: "2rem" } : {}}
-        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }} // Apple-esque Ease
-        className="absolute z-50 flex items-center gap-4 font-bold tracking-tighter text-[var(--foreground)] font-agale leading-none whitespace-nowrap"
+        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+        className="absolute z-50 flex flex-col sm:flex-row items-center gap-4 font-bold tracking-tighter text-[var(--foreground)] font-agale leading-none whitespace-nowrap"
       >
         <span className="block">GET IT!</span>
-
-        {/* Optional Line that appears after move, if desired, or keep generic */}
+        {phase >= 1 && (
+          <motion.span
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 0.3, x: 0 }}
+            className="hidden sm:block text-[10px] font-mono uppercase tracking-[0.4em] mt-2 sm:mt-0"
+          >
+                // AGENTIC_RECRUITMENT_OS
+          </motion.span>
+        )}
       </motion.div>
 
       {/* 3. Main Content (Fades in after logo moves) */}
