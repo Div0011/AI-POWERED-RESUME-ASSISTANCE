@@ -3,9 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell, AreaChart, Area } from 'recharts';
-import { FileText, Target, AlertTriangle, TrendingUp, Info, Loader2, ArrowUpRight, Sparkles } from 'lucide-react';
+import { FileText, Target, AlertTriangle, TrendingUp, Info, Loader2, ArrowUpRight, Sparkles, RefreshCw, AlertCircle } from 'lucide-react';
 import axios from 'axios';
 import { API_BASE } from '@/config';
+import { SkeletonLoader } from '@/components/ProgressComponents';
 
 interface AnalyticsData {
     total_resumes: number;
@@ -19,13 +20,43 @@ interface AnalyticsData {
 export default function AnalyticsPage() {
     const [data, setData] = useState<AnalyticsData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState('');
+    const [loadingProgress, setLoadingProgress] = useState(0);
 
     const fetchAnalytics = async () => {
+        setIsLoading(true);
+        setError('');
+        setLoadingProgress(0);
+
+        // Simulate progress for better UX
+        const progressInterval = setInterval(() => {
+            setLoadingProgress(prev => Math.min(prev + 10, 90));
+        }, 300);
+
         try {
-            const res = await axios.get(`${API_BASE}/analytics/summary`);
+            // Add timeout to prevent infinite loading
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+
+            const res = await axios.get(`${API_BASE}/analytics/summary`, {
+                signal: controller.signal,
+                timeout: 15000
+            });
+
+            clearTimeout(timeoutId);
+            clearInterval(progressInterval);
+            setLoadingProgress(100);
             setData(res.data);
-        } catch (err) {
+        } catch (err: any) {
+            clearInterval(progressInterval);
             console.error("Failed to fetch analytics:", err);
+            if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
+                setError('⏱️ Request timed out. The analytics service is taking too long. Please try again.');
+            } else if (err.response?.status === 404) {
+                setError('📊 No analytics data available yet. Start analyzing resumes to see insights.');
+            } else {
+                setError(err.response?.data?.detail || 'Failed to load analytics. Please try again.');
+            }
         } finally {
             setIsLoading(false);
         }
@@ -35,10 +66,76 @@ export default function AnalyticsPage() {
         fetchAnalytics();
     }, []);
 
+    // Enhanced Loading State with Skeleton
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-[#020202] flex items-center justify-center">
-                <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+            <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] p-8 pl-6 md:pl-12 lg:pl-24">
+                <header className="mb-12">
+                    <div className="flex items-center gap-2 mb-2 opacity-50">
+                        <TrendingUp className="w-4 h-4" />
+                        <span className="text-[10px] font-black uppercase tracking-widest text-[var(--primary)]">Global Insights</span>
+                    </div>
+                    <h1 className="text-4xl font-agale font-bold tracking-tight mb-2">Recruitment Intelligence</h1>
+                    <p className="text-[var(--foreground)]/40 font-medium font-mono text-sm leading-relaxed">Loading your analytics...</p>
+                </header>
+
+                {/* Progress Bar */}
+                <div className="mb-8">
+                    <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-bold uppercase tracking-widest opacity-60">Loading Analytics</span>
+                        <span className="text-xs font-mono opacity-40">{loadingProgress}%</span>
+                    </div>
+                    <div className="h-1 bg-[var(--card-border)] rounded-full overflow-hidden">
+                        <motion.div
+                            className="h-full bg-[var(--primary)]"
+                            initial={{ width: 0 }}
+                            animate={{ width: `${loadingProgress}%` }}
+                            transition={{ duration: 0.3 }}
+                        />
+                    </div>
+                </div>
+
+                {/* Skeleton Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-12">
+                    {[1, 2, 3, 4].map((i) => (
+                        <div key={i} className="glass-panel p-8 rounded-[2rem] animate-pulse">
+                            <div className="w-14 h-14 bg-[var(--foreground)]/10 rounded-2xl mb-6" />
+                            <div className="h-4 bg-[var(--foreground)]/10 rounded w-24 mb-2" />
+                            <div className="h-8 bg-[var(--foreground)]/10 rounded w-16 mb-2" />
+                            <div className="h-3 bg-[var(--foreground)]/10 rounded w-32" />
+                        </div>
+                    ))}
+                </div>
+
+                {/* Skeleton Charts */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {[1, 2].map((i) => (
+                        <div key={i} className="glass-panel p-10 rounded-[2.5rem] animate-pulse">
+                            <div className="h-6 bg-[var(--foreground)]/10 rounded w-48 mb-4" />
+                            <div className="h-80 bg-[var(--foreground)]/5 rounded-2xl" />
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    }
+
+    // Error State
+    if (error) {
+        return (
+            <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] p-8 pl-6 md:pl-12 lg:pl-24 flex items-center justify-center">
+                <div className="max-w-md text-center">
+                    <AlertCircle className="w-16 h-16 text-rose-500 mx-auto mb-4" />
+                    <h2 className="text-2xl font-black mb-2">Analytics Unavailable</h2>
+                    <p className="text-[var(--foreground)]/60 mb-6">{error}</p>
+                    <button
+                        onClick={fetchAnalytics}
+                        className="flex items-center gap-2 px-6 py-3 bg-[var(--primary)] text-[var(--obsidian)] rounded-xl font-bold uppercase tracking-wider text-sm hover:opacity-90 transition-all mx-auto"
+                    >
+                        <RefreshCw className="w-4 h-4" />
+                        Retry
+                    </button>
+                </div>
             </div>
         );
     }

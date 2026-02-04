@@ -18,9 +18,9 @@ if firebase_creds_json:
         creds_dict = json.loads(firebase_creds_json)
         cred = credentials.Certificate(creds_dict)
         firebase_admin.initialize_app(cred)
-        print("✅ Firebase Admin initialized via environment variable.")
+        print("[SUCCESS] Firebase Admin initialized via environment variable.")
     except Exception as e:
-        print(f"❌ Error initializing Firebase Admin: {e}")
+        print(f"[ERROR] Error initializing Firebase Admin: {e}")
 else:
     # Local fallback
     local_creds = "service-account.json"
@@ -31,11 +31,11 @@ else:
         try:
             cred = credentials.Certificate(local_creds)
             firebase_admin.initialize_app(cred)
-            print(f"✅ Firebase Admin initialized via local file: {local_creds}")
+            print(f"[SUCCESS] Firebase Admin initialized via local file: {local_creds}")
         except Exception as e:
-            print(f"❌ Error initializing Firebase Admin via local file: {e}")
+            print(f"[ERROR] Error initializing Firebase Admin via local file: {e}")
     else:
-        print("⚠️ Warning: Firebase Admin not initialized. Role-based features may fail.")
+        print("[WARNING] Warning: Firebase Admin not initialized. Role-based features may fail.")
 
 SECRET_KEY = os.getenv("SECRET_KEY", "supersecretkey")
 ALGORITHM = "HS256"
@@ -61,6 +61,19 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     return encoded_jwt
 
 async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(database.get_db)):
+    # 1. DEV_MODE Bypass (for local development)
+    if os.getenv("DEV_MODE", "false").lower() == "true":
+        print("[DEV_MODE] Bypassing authentication - using dev user")
+        # Return or create a dev user
+        dev_email = "dev@mowglai.in"
+        user = db.query(models.User).filter(models.User.email == dev_email).first()
+        if not user:
+            user = models.User(email=dev_email, role="recruiter")
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+        return user
+    
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",

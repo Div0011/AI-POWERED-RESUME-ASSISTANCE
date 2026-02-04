@@ -69,5 +69,11 @@ def rank_candidate(
         return {
             "final_score": 0.0, 
             "status": "rejected", 
-            "reasoning": f"System error during analysis: {str(e)}"
+            "reasoning": f"System error during analysis: {str(e)}",
+            "missing_skills": [],
+            "matched_skills": [],
+            "breakdown": {
+                "constraint_score": 0.0,
+                "vector_similarity": 0.0
+            }
         }

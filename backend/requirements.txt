@@ -30,3 +30,7 @@ google-auth-httplib2
 mail-parser
 beautifulsoup4
 firebase-admin
+google-genai
+PyPDF2
+pdfplumber
+python-docx
