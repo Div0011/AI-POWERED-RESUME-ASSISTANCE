@@ -27,13 +27,13 @@ export default function Home() {
     {
       id: 'recruiter',
       label: "RECRUITERS",
-      desc: "Hire top talent faster with AI automation.",
+      desc: "Hire faster with AI automation.",
       path: "/recruiter",
     },
     {
       id: 'candidate',
       label: "CANDIDATES",
-      desc: "Optimize your resume and find your dream job.",
+      desc: "Optimize your resume & get hired.",
       path: "/candidate",
     }
   ];
@@ -60,13 +60,12 @@ export default function Home() {
 
       {/* 3. Main Content (Fades in after logo moves) */}
       {phase >= 2 && (
-        <div className="flex flex-col items-center justify-start w-full max-w-7xl mx-auto px-6 z-10 pt-32 pb-12">
-
+        <div className="flex flex-col items-center justify-start w-full max-w-7xl mx-auto px-4 sm:px-6 z-10 pt-24 sm:pt-32 pb-12">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ staggerChildren: 0.2 }}
-            className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl mt-8"
+            className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8 w-full max-w-4xl mt-4 sm:mt-8"
           >
             {roles.map((role) => (
               <motion.div
@@ -75,28 +74,28 @@ export default function Home() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6 }}
                 onClick={() => router.push(role.path)}
-                className="glass-panel p-10 rounded-3xl cursor-pointer group relative overflow-hidden transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl flex flex-col items-start justify-between min-h-[400px]"
+                className="glass-panel p-6 sm:p-10 rounded-2xl sm:rounded-3xl cursor-pointer group relative overflow-hidden transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl flex flex-col items-start justify-between min-h-[300px] sm:min-h-[400px]"
               >
                 {/* Card Content */}
                 <div className="relative z-10 w-full">
-                  <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-8 bg-[var(--card-bg)] border border-[var(--card-border)] text-[var(--primary)] shadow-lg group-hover:scale-110 transition-transform duration-300">
-                    {role.id === 'recruiter' ? <Briefcase className="w-8 h-8" /> : <Users className="w-8 h-8" />}
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl flex items-center justify-center mb-6 sm:mb-8 bg-[var(--card-bg)] border border-[var(--card-border)] text-[var(--primary)] shadow-lg group-hover:scale-110 transition-transform duration-300">
+                    {role.id === 'recruiter' ? <Briefcase className="w-6 h-6 sm:w-8 sm:h-8" /> : <Users className="w-6 h-6 sm:w-8 sm:h-8" />}
                   </div>
 
-                  <h3 className="text-4xl font-bold mb-4 text-[var(--foreground)] font-agale tracking-wide">
+                  <h3 className="text-2xl sm:text-4xl font-bold mb-2 sm:mb-4 text-[var(--foreground)] font-agale tracking-wide">
                     {role.label}
                   </h3>
-                  <p className="text-[var(--foreground)]/60 text-lg leading-relaxed font-light">
+                  <p className="text-[var(--foreground)]/60 text-sm sm:text-lg leading-relaxed font-light">
                     {role.desc}
                   </p>
                 </div>
 
-                <div className="mt-12 w-full flex items-center justify-between border-t border-[var(--card-border)] pt-6">
-                  <span className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--foreground)]/40 group-hover:text-[var(--primary)] transition-colors">
+                <div className="mt-8 sm:mt-12 w-full flex items-center justify-between border-t border-[var(--card-border)] pt-4 sm:pt-6">
+                  <span className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] text-[var(--foreground)]/40 group-hover:text-[var(--primary)] transition-colors">
                     Initialize
                   </span>
-                  <div className="p-3 rounded-full bg-[var(--foreground)]/5 group-hover:bg-[var(--primary)] group-hover:text-black transition-all">
-                    <ArrowRight className="w-5 h-5" />
+                  <div className="p-2 sm:p-3 rounded-full bg-[var(--foreground)]/5 group-hover:bg-[var(--primary)] group-hover:text-black transition-all">
+                    <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
                   </div>
                 </div>
               </motion.div>

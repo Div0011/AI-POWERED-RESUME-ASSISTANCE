@@ -45,13 +45,13 @@ export default function SignupPage() {
                 animate={{ opacity: 1, scale: 1 }}
                 className="w-full max-w-md relative z-10"
             >
-                <div className="glass-panel p-10 rounded-[2.5rem] border border-white/10 shadow-2xl">
-                    <div className="flex flex-col items-center mb-8">
-                        <div className="w-16 h-16 bg-gradient-to-tr from-purple-600 to-blue-500 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/20 mb-6">
-                            <Sparkles className="text-white w-8 h-8" />
+                <div className="glass-panel p-6 sm:p-10 rounded-[2rem] sm:rounded-[2.5rem] border border-white/10 shadow-2xl bg-black/40">
+                    <div className="flex flex-col items-center mb-6 sm:mb-8 text-center">
+                        <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-tr from-purple-600 to-blue-500 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/20 mb-4 sm:mb-6">
+                            <Sparkles className="text-white w-6 h-6 sm:w-8 sm:h-8" />
                         </div>
-                        <h1 className="text-3xl font-bold tracking-tighter text-white font-agale">Create Identity</h1>
-                        <p className="text-white/40 text-sm mt-2">Join the agentic recruitment era</p>
+                        <h1 className="text-2xl sm:text-3xl font-bold tracking-tighter text-white font-agale italic leading-none">Create Identity</h1>
+                        <p className="text-white/40 text-[10px] sm:text-sm mt-2 uppercase tracking-[0.2em]">Join the agentic recruitment era</p>
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-6">

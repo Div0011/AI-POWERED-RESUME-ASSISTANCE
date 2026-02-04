@@ -61,7 +61,21 @@ def create_job(
         new_job = models.Job(
             title=job.title,
             description=job.description,
-            required_skills=required_skills,
+            company_name=job.company_name,
+            department=job.department,
+            employment_type=job.employment_type,
+            location=job.location,
+            is_remote=job.is_remote,
+            salary_min=job.salary_min,
+            salary_max=job.salary_max,
+            currency=job.currency,
+            benefits=job.benefits,
+            required_skills=required_skills or job.required_skills,
+            preferred_skills=job.preferred_skills,
+            years_experience=job.years_experience,
+            education_level=job.education_level,
+            application_deadline=job.application_deadline,
+            visibility=job.visibility,
             owner_id=current_user.id,
             embedding=job_vec
         )

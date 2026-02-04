@@ -9,6 +9,7 @@ interface Candidate {
     name: string;
     score: number;
     explanation: string;
+    analysis?: any;
 }
 
 interface ReasoningModalProps {
@@ -79,18 +80,50 @@ export default function ReasoningModal({ candidate, isOpen, onClose }: Reasoning
                                 </p>
                             </div>
 
+                            <div className="space-y-4">
+                                <h3 className="text-white/40 text-[10px] uppercase font-black tracking-widest">Neural Breakdown (60/40)</h3>
+                                <div className="space-y-3">
+                                    <div className="space-y-1">
+                                        <div className="flex justify-between text-[10px] uppercase font-bold text-white/60">
+                                            <span>Hard Skill Match (60%)</span>
+                                            <span>{Math.round((candidate.analysis?.breakdown?.constraint_score || 0) * 100)}%</span>
+                                        </div>
+                                        <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                                            <motion.div initial={{ width: 0 }} animate={{ width: `${(candidate.analysis?.breakdown?.constraint_score || 0) * 100}%` }} className="h-full bg-indigo-500" />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <div className="flex justify-between text-[10px] uppercase font-bold text-white/60">
+                                            <span>Semantic Vibe Match (40%)</span>
+                                            <span>{Math.round((candidate.analysis?.breakdown?.vector_similarity || 0) * 100)}%</span>
+                                        </div>
+                                        <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                                            <motion.div initial={{ width: 0 }} animate={{ width: `${(candidate.analysis?.breakdown?.vector_similarity || 0) * 100}%` }} className="h-full bg-[var(--primary)]" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl">
-                                    <div className="flex items-center gap-2 text-emerald-400 text-[10px] uppercase font-bold mb-2">
-                                        <Target className="w-3 h-3" /> Strengths
+                                    <div className="flex items-center gap-2 text-emerald-400 text-[10px] uppercase font-bold mb-3">
+                                        <Target className="w-3 h-3" /> Target Matches
                                     </div>
-                                    <p className="text-white/50 text-xs">High semantic match with JD requirements.</p>
+                                    <div className="flex flex-wrap gap-1">
+                                        {(candidate.analysis?.matched_skills || []).slice(0, 3).map((s: string) => (
+                                            <span key={s} className="px-1.5 py-0.5 bg-emerald-500/10 border border-emerald-500/20 rounded text-[8px] font-mono text-emerald-500">{s}</span>
+                                        ))}
+                                    </div>
                                 </div>
                                 <div className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl">
-                                    <div className="flex items-center gap-2 text-rose-400 text-[10px] uppercase font-bold mb-2">
-                                        <AlertTriangle className="w-3 h-3" /> Gaps
+                                    <div className="flex items-center gap-2 text-rose-400 text-[10px] uppercase font-bold mb-3">
+                                        <AlertTriangle className="w-3 h-3" /> Missing Links
                                     </div>
-                                    <p className="text-white/50 text-xs">Missing specific 3+ year experience flag.</p>
+                                    <div className="flex flex-wrap gap-1">
+                                        {(candidate.analysis?.missing_skills || []).slice(0, 3).map((s: string) => (
+                                            <span key={s} className="px-1.5 py-0.5 bg-rose-500/10 border border-rose-500/20 rounded text-[8px] font-mono text-rose-500">{s}</span>
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
                         </div>

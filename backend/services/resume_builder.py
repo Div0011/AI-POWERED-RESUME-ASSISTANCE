@@ -2,9 +2,9 @@ import os
 import google.generativeai as genai
 from loguru import logger
 from dotenv import load_dotenv
-from services.utils import retry_gemini
+from services.utils import retry_gemini_with_fallback
 
-load_dotenv()
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '..', '..', '.env'))
 
 class ResumeBuilder:
     def __init__(self):
@@ -15,7 +15,7 @@ class ResumeBuilder:
             genai.configure(api_key=api_key)
         self.model = genai.GenerativeModel('gemini-2.0-flash')
 
-    @retry_gemini(max_retries=3, delay=10)
+    @retry_gemini_with_fallback(max_retries=3, delay=10)
     def improve_bullet_point(self, bullet_point: str, jd_context: str) -> str:
         """
         Rewrites a resume bullet point to better align with the specific 

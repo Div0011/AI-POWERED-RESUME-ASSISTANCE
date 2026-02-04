@@ -2,9 +2,9 @@ import os
 import google.generativeai as genai
 from loguru import logger
 from dotenv import load_dotenv
-from services.utils import retry_gemini
+from services.utils import retry_gemini_with_fallback
 
-load_dotenv()
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '..', '..', '.env'))
 
 class InterviewService:
     def __init__(self):
@@ -15,7 +15,7 @@ class InterviewService:
             genai.configure(api_key=api_key)
         self.model = genai.GenerativeModel('gemini-2.0-flash')
 
-    @retry_gemini(max_retries=3, delay=10)
+    @retry_gemini_with_fallback(max_retries=3, delay=10)
     def generate_ice_breaker(self, jd_text: str, resume_text: str) -> str:
         """
         Generates the first question of the interview based on the JD and Resume.
@@ -37,7 +37,7 @@ class InterviewService:
         response = self.model.generate_content(prompt)
         return response.text.strip()
 
-    @retry_gemini(max_retries=3, delay=10)
+    @retry_gemini_with_fallback(max_retries=3, delay=10)
     def conduct_interview_step(self, jd_text: str, resume_text: str, history: list) -> dict:
         """
         Takes the interview history and generates the next technical question or follow-up.
@@ -72,7 +72,7 @@ class InterviewService:
         import json
         return json.loads(text)
 
-    @retry_gemini(max_retries=3, delay=10)
+    @retry_gemini_with_fallback(max_retries=3, delay=10)
     def generate_final_feedback(self, jd_text: str, history: list) -> str:
         """
         Generates a summary report after the interview ends.

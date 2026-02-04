@@ -12,8 +12,8 @@ from sentry_sdk.integrations.fastapi import FastApiIntegration
 import uvicorn
 from prometheus_fastapi_instrumentator import Instrumentator
 
-# 1. Load Environment
-load_dotenv()
+# 1. Load Environment from root directory
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '..', '.env'))
 
 # 2. Configure Sentry
 SENTRY_DSN = os.getenv("SENTRY_DSN")

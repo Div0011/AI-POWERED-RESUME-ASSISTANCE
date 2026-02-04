@@ -1,5 +1,6 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Text, JSON, Float
+from sqlalchemy import Column, Integer, String, ForeignKey, Text, JSON, Float, Boolean, DateTime
 from sqlalchemy.orm import relationship
+from datetime import datetime
 from database import Base, DATABASE_URL
 
 # SQLite compatibility for pgvector
@@ -28,12 +29,44 @@ class Job(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, index=True)
     description = Column(Text)
+    company_name = Column(String, index=True)
+    department = Column(String)
+    employment_type = Column(String)
+    location = Column(String)
+    is_remote = Column(Boolean, default=False)
+    salary_min = Column(Integer)
+    salary_max = Column(Integer)
+    currency = Column(String, default="USD")
+    benefits = Column(JSON) # List of strings
     required_skills = Column(JSON) # List of strings
+    preferred_skills = Column(JSON) # List of strings
+    years_experience = Column(Integer)
+    education_level = Column(String)
+    application_deadline = Column(String)
+    num_openings = Column(Integer, default=1)
+    visibility = Column(String, default="public")
+    
     owner_id = Column(Integer, ForeignKey("users.id"))
     embedding = Column(Vector(384)) # Embedding for Job Description
 
     owner = relationship("User", back_populates="jobs")
     candidates = relationship("Candidate", back_populates="job")
+    applications = relationship("Application", back_populates="job")
+
+class Application(Base):
+    __tablename__ = "applications"
+
+    id = Column(Integer, primary_key=True, index=True)
+    job_id = Column(Integer, ForeignKey("jobs.id"))
+    candidate_email = Column(String, index=True)
+    resume_text = Column(Text)
+    match_score = Column(Float)
+    matched_skills = Column(JSON)
+    missing_skills = Column(JSON)
+    status = Column(String, default="pending") # pending, accepted, rejected
+    applied_at = Column(DateTime, default=datetime.utcnow)
+
+    job = relationship("Job", back_populates="applications")
 
 class Candidate(Base):
     __tablename__ = "candidates"

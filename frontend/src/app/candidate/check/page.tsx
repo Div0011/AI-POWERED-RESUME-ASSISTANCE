@@ -126,69 +126,71 @@ function CandidateCheckContent() {
 
     return (
         <AIErrorBoundary fallbackMessage="Resume analysis failed. The AI service may be experiencing quota limits. Please try again shortly.">
-            <div className="pt-32 px-6 md:px-12 pb-12 font-sans max-w-7xl mx-auto h-[calc(100vh-2rem)] flex flex-col">
+            <div className="pt-24 sm:pt-32 px-4 sm:px-12 pb-12 font-sans max-w-7xl mx-auto min-h-[calc(100vh-2rem)] flex flex-col">
                 {/* Header */}
-                <header className="mb-8 flex items-center justify-between shrink-0">
-                    <div>
-                        <div className="flex items-center gap-2 text-[var(--primary)] text-xs font-bold uppercase tracking-[0.2em] mb-2">
-                            <Cpu className="w-4 h-4" />
+                <header className="mb-6 sm:mb-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6 shrink-0">
+                    <div className="px-2">
+                        <div className="flex items-center gap-2 text-[var(--primary)] text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] mb-2">
+                            <Cpu className="w-3 h-3 sm:w-4 sm:h-4" />
                             ATS SIMULATION KERNEL
                         </div>
+                        <h1 className="text-3xl sm:text-5xl font-agale font-bold tracking-tight text-[var(--foreground)] italic">Neural Analysis</h1>
                     </div>
 
-                    <div className="flex gap-4">
+                    <div className="flex flex-wrap gap-2 sm:gap-4 px-2">
                         {/* Manual Input Toggle */}
                         <button
                             onClick={toggleManualInput}
-                            className={`flex items-center gap-2 px-6 py-3 border font-bold rounded-lg transition-all uppercase tracking-widest text-xs ${isManualInput ? 'bg-[var(--primary)] text-[var(--obsidian)] border-[var(--primary)]' : 'border-[var(--primary)]/30 text-[var(--primary)] hover:bg-[var(--primary)]/10'}`}
+                            className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 sm:px-6 py-3 border font-bold rounded-xl transition-all uppercase tracking-widest text-[10px] sm:text-xs ${isManualInput ? 'bg-[var(--primary)] text-[var(--obsidian)] border-[var(--primary)]' : 'border-[var(--card-border)] text-[var(--foreground)]/60 hover:bg-[var(--primary)]/10'}`}
                         >
                             <FileText className="w-4 h-4" />
-                            {isManualInput ? "Manual Input Active" : "Type Manually"}
+                            <span className="hidden sm:inline">{isManualInput ? "Manual Input Active" : "Type Manually"}</span>
+                            <span className="sm:hidden">{isManualInput ? "Manual" : "Type"}</span>
                         </button>
 
                         {/* Upload Button */}
-                        <div className="relative overflow-hidden group">
+                        <div className="relative overflow-hidden group flex-1 sm:flex-initial">
                             <input
                                 type="file"
                                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
                                 onChange={handleFileUpload}
                                 accept=".pdf,.txt"
                             />
-                            <button className="flex items-center gap-2 px-6 py-3 border border-[var(--primary)]/30 text-[var(--primary)] font-bold rounded-lg hover:bg-[var(--primary)]/10 transition-all uppercase tracking-widest text-xs">
+                            <button className="w-full flex items-center justify-center gap-2 px-4 sm:px-6 py-3 border border-[var(--card-border)] text-[var(--foreground)]/60 font-bold rounded-xl hover:bg-[var(--primary)]/10 transition-all uppercase tracking-widest text-[10px] sm:text-xs">
                                 <Upload className="w-4 h-4" />
-                                {file ? "File Selected" : "Upload Resume"}
+                                <span>{file ? "Selected" : "Upload"}</span>
                             </button>
                         </div>
 
                         <button
                             onClick={runSimulation}
                             disabled={isSimulating || (!resumeText && !file)}
-                            className="flex items-center gap-2 px-6 py-3 bg-emerald-500 text-black font-bold rounded-lg hover:bg-emerald-400 transition-all disabled:opacity-50 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:shadow-[0_0_30px_rgba(16,185,129,0.5)] active:scale-95"
+                            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 sm:px-8 py-3 bg-[var(--primary)] text-black font-black rounded-xl hover:brightness-110 transition-all disabled:opacity-50 shadow-xl active:scale-95 uppercase tracking-widest text-[10px] sm:text-xs"
                         >
-                            {isSimulating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Play className="w-5 h-5 fill-current" />}
-                            EXECUTE ANALYSIS
+                            {isSimulating ? <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" /> : <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />}
+                            Execute Analysis
                         </button>
                     </div>
                 </header>
 
                 {/* IDE Main Window */}
-                <div className="flex-1 glass-panel rounded-xl overflow-hidden border border-[var(--card-border)] flex flex-col md:flex-row shadow-2xl h-[70vh]">
+                <div className="flex-1 glass-panel rounded-2xl sm:rounded-3xl overflow-hidden border border-[var(--card-border)] flex flex-col md:flex-row shadow-2xl min-h-[500px] md:h-[65vh]">
 
-                    {/* Sidebar (File Explorer style) */}
-                    <div className="w-full md:w-64 bg-[var(--obsidian)]/50 border-r border-[var(--card-border)] p-4 flex flex-col gap-2">
-                        <div className="text-[10px] font-bold uppercase tracking-widest text-[var(--foreground)]/30 mb-2 pl-2">Explorer</div>
+                    {/* Sidebar (File Explorer style) - Top on mobile, Left on Desktop */}
+                    <div className="w-full md:w-64 bg-black/40 border-b md:border-b-0 md:border-r border-[var(--card-border)] p-4 flex flex-row md:flex-col gap-2 overflow-x-auto md:overflow-x-visible">
+                        <div className="hidden md:block text-[10px] font-bold uppercase tracking-widest text-[var(--foreground)]/30 mb-2 pl-2">Explorer</div>
 
                         <button
                             onClick={() => setActiveTab('source')}
-                            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === 'source' ? 'bg-[var(--primary)]/10 text-[var(--primary)]' : 'text-[var(--foreground)]/60 hover:bg-[var(--foreground)]/5'}`}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] sm:text-xs font-bold uppercase tracking-widest transition-colors whitespace-nowrap ${activeTab === 'source' ? 'bg-[var(--primary)]/10 text-[var(--primary)] border border-[var(--primary)]/20' : 'text-[var(--foreground)]/40 hover:bg-[var(--foreground)]/5 border border-transparent'}`}
                         >
                             <FileCode className="w-4 h-4" />
-                            {isManualInput ? 'manual_input.txt' : (file ? file.name : 'resume_source')}
+                            <span className="max-w-[100px] truncate">{isManualInput ? 'manual_input.txt' : (file ? file.name : 'resume_source')}</span>
                         </button>
 
                         <button
                             onClick={() => setActiveTab('output')}
-                            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === 'output' ? 'bg-[var(--primary)]/10 text-[var(--primary)]' : 'text-[var(--foreground)]/60 hover:bg-[var(--foreground)]/5'}`}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] sm:text-xs font-bold uppercase tracking-widest transition-colors whitespace-nowrap ${activeTab === 'output' ? 'bg-[var(--primary)]/10 text-[var(--primary)] border border-[var(--primary)]/20' : 'text-[var(--foreground)]/40 hover:bg-[var(--foreground)]/5 border border-transparent'}`}
                         >
                             <Terminal className="w-4 h-4" />
                             output.json
@@ -198,10 +200,10 @@ function CandidateCheckContent() {
                     {/* Main Editor Area */}
                     <div className="flex-1 bg-[var(--background)]/30 flex flex-col relative w-full h-full overflow-hidden">
                         {/* Source Tab (Resume Code View) */}
-                        <div className={`absolute inset-0 p-8 font-mono text-sm transition-opacity duration-300 ${activeTab === 'source' ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}>
+                        <div className={`absolute inset-0 p-4 sm:p-8 font-mono text-sm transition-opacity duration-300 ${activeTab === 'source' ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}>
                             {isManualInput ? (
                                 <div className="h-full flex flex-col">
-                                    <p className="mb-4 text-[var(--primary)] opacity-50">// Enter your resume text below for manual processing</p>
+                                    <p className="mb-4 text-[var(--primary)] text-[10px] opacity-50 underline underline-offset-4 tracking-[0.2em] uppercase font-black">// Manual Input Buffer</p>
                                     <textarea
                                         value={resumeText}
                                         onChange={(e) => {
@@ -209,64 +211,62 @@ function CandidateCheckContent() {
                                             localStorage.setItem('resume_text', e.target.value);
                                             localStorage.setItem('job_id', jobId.toString());
                                         }}
-                                        placeholder="Paste your resume content here..."
-                                        className="flex-1 bg-transparent border border-[var(--card-border)] rounded-lg p-4 text-[var(--foreground)]/90 focus:border-[var(--primary)] focus:outline-none resize-none font-mono text-sm leading-relaxed"
+                                        placeholder="Paste resume content here..."
+                                        className="flex-1 bg-black/20 border border-[var(--card-border)] rounded-xl p-4 text-[var(--foreground)]/90 focus:border-[var(--primary)] focus:outline-none resize-none font-mono text-xs sm:text-sm leading-relaxed"
                                     />
                                 </div>
                             ) : file || resumeText ? (
                                 <div className="h-full overflow-y-auto custom-scrollbar text-[var(--foreground)]/80">
-                                    <p className="mb-4 text-[var(--primary)] opacity-50">// Resume Source Code</p>
-                                    <p className="mb-4 text-[var(--primary)] opacity-50">// File: {file ? file.name : 'Unknown'}</p>
-                                    <div className="whitespace-pre-wrap leading-relaxed">
-                                        {resumeText || "Analyzing file structure..."}
+                                    <p className="mb-4 text-[var(--primary)] text-[10px] opacity-50 underline underline-offset-4 tracking-[0.2em] uppercase font-black">// Source Code: {file ? file.name : 'RAW_TEXT'}</p>
+                                    <div className="whitespace-pre-wrap leading-relaxed text-xs sm:text-sm opacity-60">
+                                        {resumeText || "Initializing neural scan..."}
                                     </div>
                                 </div>
                             ) : (
-                                <div className="h-full flex flex-col items-center justify-center text-[var(--foreground)]/20">
-                                    <FileCode className="w-16 h-16 mb-4 opacity-50" />
-                                    <p className="uppercase tracking-widest font-bold text-xs">No Source Detected</p>
-                                    <p className="mt-2 text-xs">Upload a resume or select Manual Input.</p>
+                                <div className="h-full flex flex-col items-center justify-center text-[var(--foreground)]/20 text-center px-6">
+                                    <FileCode className="w-12 h-12 mb-4 opacity-30" />
+                                    <p className="uppercase tracking-[0.3em] font-black text-[10px]">No Source Code Detected</p>
+                                    <p className="mt-2 text-[10px] opacity-50">Upload a resource or initialize manual buffer.</p>
                                 </div>
                             )}
                         </div>
 
                         {/* Output Tab (Results) */}
-                        <div className={`absolute inset-0 overflow-y-auto p-8 font-mono text-sm transition-opacity duration-300 ${activeTab === 'output' ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}>
+                        <div className={`absolute inset-0 overflow-y-auto p-4 sm:p-8 font-mono text-sm transition-opacity duration-300 ${activeTab === 'output' ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}>
                             {isSimulating ? (
-                                <div className="h-full flex flex-col items-center justify-center">
-                                    <div className="max-w-2xl w-full">
+                                <div className="h-full flex flex-col items-center justify-center py-10 px-4">
+                                    <div className="w-full max-w-md">
                                         <MultiStageProgress
                                             stages={analysisStages}
                                             currentStage={currentAnalysisStage}
-                                            estimatedTime="8-12 seconds"
+                                            estimatedTime=" ~10s"
                                         />
                                     </div>
                                 </div>
                             ) : results ? (
-                                <div className="space-y-8 max-w-3xl mx-auto">
+                                <div className="space-y-6 sm:space-y-10 max-w-3xl mx-auto pb-10">
                                     {/* Enhanced Score Block with Circular Progress */}
-                                    <div className="flex flex-col md:flex-row items-center justify-center gap-8 p-8 glass-panel rounded-2xl border border-emerald-500/20">
+                                    <div className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-10 p-6 sm:p-10 glass-panel rounded-2xl sm:rounded-3xl border border-emerald-500/10">
                                         <CircularProgress
                                             percentage={results.score * 100}
-                                            size={140}
-                                            strokeWidth={10}
-                                            label="ATS Match Score"
+                                            size={120}
+                                            strokeWidth={8}
                                             color="rgb(16, 185, 129)"
                                         />
-                                        <div className="flex-1 space-y-3">
-                                            <div className="text-xs font-bold uppercase tracking-widest text-emerald-500/60">Analysis Complete</div>
-                                            <div className="h-2 w-full bg-[var(--background)] rounded-full overflow-hidden">
+                                        <div className="flex-1 space-y-4 text-center sm:text-left">
+                                            <div className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-500/60 font-agale">Kernel Scan: COMPLETE</div>
+                                            <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
                                                 <motion.div
-                                                    className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400"
+                                                    className="h-full bg-emerald-500 shadow-[0_0_10px_#10b981]"
                                                     initial={{ width: 0 }}
                                                     animate={{ width: `${results.score * 100}%` }}
                                                     transition={{ duration: 1.5, ease: 'easeOut' }}
                                                 />
                                             </div>
-                                            <p className="text-xs text-[var(--foreground)]/60">
-                                                {results.score >= 0.7 ? '✅ Strong match! Your resume aligns well with the requirements.' :
-                                                    results.score >= 0.5 ? '⚠️ Moderate match. Consider highlighting missing skills.' :
-                                                        '❌ Low match. Review the missing skills below.'}
+                                            <p className="text-[10px] sm:text-xs leading-relaxed opacity-60 italic">
+                                                {results.score >= 0.7 ? 'Strong alignment detected. Profile ready for priority dispatch.' :
+                                                    results.score >= 0.5 ? 'Moderate compatibility. Skill optimization recommended.' :
+                                                        'Critical mismatch identified. Rewrite required for sector entry.'}
                                             </p>
                                         </div>
                                     </div>

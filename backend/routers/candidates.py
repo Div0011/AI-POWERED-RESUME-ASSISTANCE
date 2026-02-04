@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 from database import get_db
 import models, schemas, auth
 from loguru import logger
@@ -8,12 +8,17 @@ from loguru import logger
 router = APIRouter(dependencies=[Depends(auth.RoleChecker("recruiter"))])
 
 @router.get("/", response_model=List[schemas.CandidateResponse])
-def get_candidates(db: Session = Depends(get_db)):
+def get_candidates(job_id: Optional[int] = None, db: Session = Depends(get_db)):
     """
     Returns all candidates with their scores, status, and reasoning.
+    Optionally filters by job_id for specific 'Mission' dashboarding.
     """
     try:
-        candidates = db.query(models.Candidate).all()
+        query = db.query(models.Candidate)
+        if job_id:
+            query = query.filter(models.Candidate.job_id == job_id)
+        
+        candidates = query.all()
         return candidates
     except Exception as e:
         logger.error(f"Error fetching candidates: {e}")
@@ -40,6 +45,15 @@ def approve_candidate(candidate_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Candidate not found")
     
     candidate.confidence_score = "selected"
+    
+    # Update application status if it exists
+    app = db.query(models.Application).filter(
+        models.Application.candidate_id == candidate_id,
+        models.Application.job_id == candidate.job_id
+    ).first()
+    if app:
+        app.status = "selected"
+        
     db.commit()
     
     try:
@@ -61,6 +75,15 @@ def decline_candidate(candidate_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Candidate not found")
     
     candidate.confidence_score = "rejected"
+    
+    # Update application status if it exists
+    app = db.query(models.Application).filter(
+        models.Application.candidate_id == candidate_id,
+        models.Application.job_id == candidate.job_id
+    ).first()
+    if app:
+        app.status = "rejected"
+        
     db.commit()
     
     try:

@@ -31,10 +31,25 @@ class Token(BaseModel):
 class JobCreate(BaseModel):
     title: str = Field(..., min_length=1)
     description: str = Field(..., min_length=10)
+    company_name: str = Field(default="Unknown Corp")
+    department: Optional[str] = None
+    employment_type: Optional[str] = None
+    location: Optional[str] = None
+    is_remote: bool = False
+    salary_min: Optional[int] = 0
+    salary_max: Optional[int] = 0
+    currency: str = "USD"
+    benefits: List[str] = []
+    required_skills: List[str] = []
+    preferred_skills: List[str] = []
+    years_experience: Optional[int] = 0
+    education_level: Optional[str] = None
+    application_deadline: Optional[str] = None
+    visibility: str = "public"
 
 class JobResponse(JobCreate):
     id: int
-    required_skills: List[str] = []
+    owner_id: int
     
     model_config = ConfigDict(from_attributes=True)
 
@@ -121,3 +136,26 @@ class InterviewStepResponse(BaseModel):
 class InterviewFeedbackRequest(BaseModel):
     job_id: int
     history: List[Dict[str, str]]
+class JobExpandRequest(BaseModel):
+    keywords: List[str]
+
+class JobExpandResponse(BaseModel):
+    suggested_description: str
+    suggested_title: str
+
+class ApplicationCreate(BaseModel):
+    job_id: int
+    resume_text: str
+    candidate_email: EmailStr
+
+class ApplicationResponse(BaseModel):
+    id: int
+    job_id: int
+    candidate_email: str
+    match_score: float
+    status: str
+    applied_at: Any
+    matched_skills: List[str] = []
+    missing_skills: List[str] = []
+
+    model_config = ConfigDict(from_attributes=True)
