@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Upload, FileText, Play, AlertCircle, CheckCircle2, Loader2, Save, Terminal, FileCode, Cpu } from 'lucide-react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import axios from 'axios';
 import { API_BASE } from '@/config';
 
-export default function CandidateCheckPage() {
+function CandidateCheckContent() {
     const [file, setFile] = useState<File | null>(null);
     const [resumeText, setResumeText] = useState("");
     const [isSimulating, setIsSimulating] = useState(false);
@@ -203,5 +203,18 @@ export default function CandidateCheckPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function CandidateCheckPage() {
+    return (
+        <Suspense fallback={
+            <div className="pt-32 flex flex-col items-center justify-center min-h-[60vh] text-[var(--primary)] font-mono">
+                <Loader2 className="w-10 h-10 animate-spin mb-4" />
+                <p className="animate-pulse tracking-widest text-xs">BOOTING ATS_KERNEL_v2.0...</p>
+            </div>
+        }>
+            <CandidateCheckContent />
+        </Suspense>
     );
 }
