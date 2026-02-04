@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import {
     Building2, Briefcase, DollarSign, Target, Sparkles,
     ChevronRight, ChevronLeft, Check, Calendar, MapPin,
-    Users, GraduationCap, Award, Clock, Eye
+    Users, GraduationCap, Award, Clock, Eye, Zap
 } from 'lucide-react';
 import axios from 'axios';
 import { API_BASE } from '@/config';
@@ -514,7 +514,7 @@ export default function EnhancedJobCreationForm() {
                                 AI Brief
                             </h2>
                             <button
-                                onClick={generateAIDescription}
+                                onClick={generateDescription}
                                 disabled={isGenerating}
                                 className="w-full sm:w-auto px-4 py-2 sm:px-6 sm:py-3 bg-[var(--primary)]/10 text-[var(--primary)] border border-[var(--primary)]/30 rounded-xl text-[10px] sm:text-xs font-bold uppercase tracking-widest hover:bg-[var(--primary)]/20 transition-all flex items-center justify-center gap-2"
                             >

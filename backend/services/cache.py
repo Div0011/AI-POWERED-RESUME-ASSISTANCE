@@ -105,8 +105,6 @@ def cache_bullet_improvement(bullet_point: str, jd_context: str, improved: str):
     """
     Cache a bullet point improvement result.
     """
-    global _bullet_cache
-    
     # Generate key
     key = hashlib.md5(f"{bullet_point}::{jd_context}".encode()).hexdigest()
     
