@@ -42,27 +42,10 @@ const ClientLayoutContent = ({ children }: { children: React.ReactNode }) => {
     const [isProcessing, setIsProcessing] = useState(false);
 
     useEffect(() => {
-        // 0. Development Mode Bypass
-        if (process.env.NEXT_PUBLIC_DEV_MODE === 'true') {
-            return;
-        }
-
         if (authLoading) return;
 
-        // 1. Redirect unauthenticated users
-        if (!token && (pathname.startsWith('/recruiter') || pathname.startsWith('/candidate'))) {
-            router.push('/login');
-            return;
-        }
-
-        // 2. Role-based Access Control
-        if (token && user?.role === 'candidate' && pathname.startsWith('/recruiter')) {
-            router.push('/candidate/check');
-        }
-
-        if (token && user?.role === 'recruiter' && pathname.startsWith('/candidate')) {
-            router.push('/recruiter/dashboard');
-        }
+        // AUTH GUARD REMOVED - TOTAL ACCESS ENABLED
+        // Redirection logic deactivated to allow pure agentic exploration
     }, [pathname, token, user, authLoading, router]);
 
     return (
