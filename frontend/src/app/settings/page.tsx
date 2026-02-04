@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { useAuth } from "@/context/AuthContext";
-import { Shield, User, Bell, Terminal, Palette } from 'lucide-react';
+import { Shield, User, Bell, Terminal, Palette, Save } from 'lucide-react';
 
 export default function SettingsPage() {
     const { user } = useAuth();

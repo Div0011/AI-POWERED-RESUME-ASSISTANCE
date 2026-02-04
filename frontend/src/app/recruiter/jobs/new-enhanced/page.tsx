@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import {
     Building2, Briefcase, DollarSign, Target, Sparkles,
     ChevronRight, ChevronLeft, Check, Calendar, MapPin,
-    Users, GraduationCap, Award, Clock, Eye, Zap
+    Users, GraduationCap, Award, Clock, Eye, Zap, Loader2
 } from 'lucide-react';
 import axios from 'axios';
 import { API_BASE } from '@/config';
