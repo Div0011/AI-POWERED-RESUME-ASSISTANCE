@@ -1,281 +1,192 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
-import CandidateCard from '@/components/dashboard/CandidateCard';
-import ReasoningModal from '@/components/dashboard/ReasoningModal';
-import { Sparkles, Search, RefreshCcw, TrendingUp, Users, Target, Terminal } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Card, NeuralStat, SecTitle, NeuralBadge, NeuralButton, PipelineOrb, NeuralBridge } from '@/components/wireframe/UI';
+import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { API_BASE } from '@/config';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Zap, Users, Briefcase, Calendar, MessageSquare, Globe, Search, Command } from 'lucide-react';
 
-interface Candidate {
-    id: number;
-    name: string;
-    email: string;
-    score: number;
-    confidence_score: string; // Used as status in backend
-    skills: string[];
-    explanation: string;
-    analysis?: any;
-}
+export default function NeuralRecruiterDashboard() {
+  const [jobs, setJobs] = useState<any[]>([]);
+  const [candidates, setCandidates] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-const StatCard = ({ icon: Icon, label, value, trend }: any) => (
-    <motion.div
-        whileHover={{ y: -5 }}
-        className="glass-panel p-6 rounded-3xl flex flex-col justify-between h-[160px]"
-    >
-        <div className="flex justify-between items-start">
-            <div className="p-3 bg-[var(--primary)]/10 rounded-2xl text-[var(--primary)]">
-                <Icon className="w-6 h-6" />
-            </div>
-            {trend && (
-                <span className="text-xs font-bold text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded-full">
-                    {trend}
-                </span>
-            )}
-        </div>
+  useEffect(() => {
+    const loadNeuralData = async () => {
+      try {
+        const jobsRes = await axios.get(`${API_BASE}/jobs/`);
+        setJobs(jobsRes.data);
+        if (jobsRes.data.length > 0) {
+          const candRes = await axios.get(`${API_BASE}/candidates/?job_id=${jobsRes.data[0].id}`);
+          setCandidates(candRes.data);
+        }
+      } catch (err) {
+        console.error("Neural data link failed:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadNeuralData();
+  }, []);
+
+  return (
+    <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-1000">
+      
+      {/* Immersive Header */}
+      <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 border-b border-white/5 pb-8 relative">
+        <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-[var(--cyan)] via-[var(--purple)] to-transparent opacity-20" />
         <div>
-            <h3 className="text-4xl font-agale font-bold text-[var(--foreground)] tracking-tight">{value}</h3>
-            <p className="text-[var(--foreground)]/50 text-xs font-mono tracking-widest uppercase mt-1">{label}</p>
+           <div className="text-[9px] text-[var(--dim)] font-black uppercase tracking-[0.5em] mb-2 flex items-center gap-2">
+             <div className="w-1.5 h-1.5 bg-[var(--cyan)] rounded-full animate-pulse shadow-[0_0_10px_var(--cyan)]" />
+             Neural Link Established
+           </div>
+           <h1 className="text-4xl font-black font-display text-[var(--text)] tracking-tighter">Recruitment Command</h1>
+           <p className="text-xs text-[var(--muted)] mt-2 italic font-medium">Analyzing 2.4k talent signals across global mission pools</p>
         </div>
-    </motion.div>
-);
+        <div className="flex gap-3">
+           <div className="bg-[var(--navy2)] border border-[var(--border)] rounded-full px-5 py-2.5 flex items-center gap-3">
+              <Command className="w-4 h-4 text-[var(--dim)]" />
+              <input placeholder="Neural search..." className="bg-transparent border-none outline-none text-[11px] font-bold text-[var(--text)] w-48 placeholder:text-[var(--dim)]" />
+           </div>
+           <NeuralButton variant="primary" size="md">⚡ Deploy New Role</NeuralButton>
+        </div>
+      </header>
 
-function DashboardContent() {
-    const searchParams = useSearchParams();
-    const router = useRouter();
-    const jobId = searchParams.get('job_id');
+      <div className="grid lg:grid-cols-4 gap-8">
+        
+        {/* L-Column: Dynamic Metrics */}
+        <div className="lg:col-span-1 space-y-4">
+           <SecTitle>Operational Load</SecTitle>
+           <div className="space-y-3">
+              <NeuralStat num={jobs.length.toString()} label="Active Missions" icon={Briefcase} />
+              <NeuralStat num={candidates.length.toString()} label="Neural Screens" icon={Users} />
+              <NeuralStat num="12" label="Simulations" icon={Zap} />
+              <NeuralStat num="4" label="Final Filters" icon={Calendar} />
+           </div>
+           
+           <Card className="mt-8 border-dashed border-white/10 opacity-60">
+              <div className="flex items-center gap-3 mb-2">
+                 <div className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-pulse" />
+                 <span className="text-[10px] font-black uppercase tracking-widest">Network Alert</span>
+              </div>
+              <p className="text-[9px] text-[var(--muted)] leading-relaxed">System identified 3 matching candidates in Global Pool for 'Backend' role. Deploy expansion?</p>
+              <NeuralButton variant="ghost" size="sm" className="w-full mt-3 !text-[9px]">Confirm Expansion</NeuralButton>
+           </Card>
+        </div>
 
-    const [candidates, setCandidates] = useState<Candidate[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [selectedCand, setSelectedCand] = useState<Candidate | null>(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [searchQuery, setSearchQuery] = useState("");
+        {/* Center: The Pipeline Orb */}
+        <div className="lg:col-span-2 flex flex-col items-center justify-center py-10 relative">
+           {/* Decorative Background Aura */}
+           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-[var(--cyan)] rounded-full blur-[150px] opacity-[0.05] pointer-events-none" />
+           
+           <PipelineOrb size={320} />
+           
+           <div className="mt-12 w-full grid md:grid-cols-3 gap-6">
+              <div className="text-center group cursor-pointer hover:scale-110 transition-transform">
+                 <div className="text-xl font-black font-display text-[var(--cyan)] neural-glow-cyan">42%</div>
+                 <div className="text-[8px] font-black uppercase tracking-widest text-[var(--dim)] mt-1">Sourcing speed</div>
+              </div>
+              <div className="text-center group cursor-pointer hover:scale-110 transition-transform">
+                 <div className="text-xl font-black font-display text-[var(--purple)] neural-glow-purple">8.4d</div>
+                 <div className="text-[8px] font-black uppercase tracking-widest text-[var(--dim)] mt-1">Avg Time to Match</div>
+              </div>
+              <div className="text-center group cursor-pointer hover:scale-110 transition-transform">
+                 <div className="text-xl font-black font-display text-green-400">98%</div>
+                 <div className="text-[8px] font-black uppercase tracking-widest text-[var(--dim)] mt-1">Hiring Velocity</div>
+              </div>
+           </div>
+        </div>
 
-    const [jobs, setJobs] = useState<any[]>([]);
-    const [activeJob, setActiveJob] = useState<any>(null);
-
-    const fetchJobs = async () => {
-        try {
-            const res = await axios.get(`${API_BASE}/jobs/`);
-            setJobs(res.data);
-            if (jobId) {
-                const current = res.data.find((j: any) => j.id === parseInt(jobId));
-                setActiveJob(current);
-            }
-        } catch (err) {
-            console.error("Failed to fetch missions:", err);
-        }
-    };
-
-    const fetchCandidates = async () => {
-        setIsLoading(true);
-        try {
-            const endpoint = jobId
-                ? `${API_BASE}/candidates/?job_id=${jobId}`
-                : `${API_BASE}/candidates/`;
-            const res = await axios.get(endpoint);
-
-            // Sort by score descending (Ranked Intelligence)
-            const sorted = res.data.sort((a: Candidate, b: Candidate) => (b.score || 0) - (a.score || 0));
-            setCandidates(sorted);
-        } catch (err) {
-            console.error("Failed to fetch candidates:", err);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchJobs();
-        fetchCandidates();
-    }, [jobId]);
-
-    const handleApprove = async (id: number) => {
-        try {
-            await axios.post(`${API_BASE}/candidates/${id}/approve`);
-            setCandidates(prev => prev.map(c => c.id === id ? { ...c, confidence_score: 'selected' } : c));
-        } catch (err) {
-            console.error("Approval failed:", err);
-        }
-    };
-
-    const handleDecline = async (id: number) => {
-        try {
-            await axios.post(`${API_BASE}/candidates/${id}/decline`);
-            setCandidates(prev => prev.map(c => c.id === id ? { ...c, confidence_score: 'rejected' } : c));
-        } catch (err) {
-            console.error("Decline failed:", err);
-        }
-    };
-
-    const columns = [
-        { id: 'selected', title: 'Highly Compatible', icon: '✨', color: 'border-emerald-500/20 bg-emerald-500/5' },
-        { id: 'under recruiter review', title: 'Review Needed', icon: '👀', color: 'border-amber-500/20 bg-amber-500/5' },
-        { id: 'rejected', title: 'Not a Match', icon: '📁', color: 'border-rose-500/20 bg-rose-500/5' },
-    ];
-
-    const filtered = candidates.filter(c =>
-        c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.email.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-
-    return (
-        <div className="min-h-screen p-4 sm:p-8 pt-24 sm:pt-32 max-w-7xl mx-auto font-sans">
-            {/* Mission Hub Selection */}
-            <div className="mb-8 sm:mb-12 flex flex-wrap gap-2 sm:gap-4">
-                <button
-                    onClick={() => router.push('/recruiter/dashboard')}
-                    className={`px-4 py-2 sm:px-6 sm:py-3 rounded-xl sm:rounded-2xl text-[8px] sm:text-[10px] font-black uppercase tracking-widest border transition-all ${!jobId ? 'bg-[var(--primary)] text-black border-[var(--primary)]' : 'bg-white/5 border-white/10 opacity-40 hover:opacity-100'}`}
-                >
-                    Global View
-                </button>
-                {jobs.map(job => (
-                    <button
-                        key={job.id}
-                        onClick={() => router.push(`/recruiter/dashboard?job_id=${job.id}`)}
-                        className={`px-4 py-2 sm:px-6 sm:py-3 rounded-xl sm:rounded-2xl text-[8px] sm:text-[10px] font-black uppercase tracking-widest border transition-all ${parseInt(jobId || '0') === job.id ? 'bg-[var(--primary)] text-black border-[var(--primary)]' : 'bg-white/5 border-white/10 opacity-40 hover:opacity-100'}`}
-                    >
-                        {job.title}
-                    </button>
-                ))}
-
-                <button
-                    onClick={() => router.push('/recruiter/jobs/new-enhanced')}
-                    className="px-4 py-2 sm:px-6 sm:py-3 rounded-xl sm:rounded-2xl text-[8px] sm:text-[10px] font-black uppercase tracking-widest border border-dashed border-[var(--primary)]/30 text-[var(--primary)] flex items-center gap-2 hover:bg-[var(--primary)]/10 transition-all"
-                >
-                    <Sparkles className="w-3 h-3" /> New Mission
-                </button>
-            </div>
-
-            {/* Header Section */}
-            <header className="mb-8 sm:mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
-                <div>
-                    <div className="flex items-center gap-2 text-[var(--primary)] text-[8px] sm:text-[10px] font-black uppercase tracking-[0.3em] mb-2 sm:mb-3">
-                        <Terminal className="w-3 h-3 sm:w-4 sm:h-4" />
-                        MISSION_CONTROL :: TALENT_MATRIX
+        {/* R-Column: AI Assistant & Events */}
+        <div className="lg:col-span-1 space-y-6">
+           <section>
+              <SecTitle>Neural Coach</SecTitle>
+              <Card className="!bg-[var(--navy3)] !p-0 overflow-hidden border-none shadow-[0_0_20px_rgba(187,0,253,0.05)]">
+                 <div className="p-4 border-b border-white/5 bg-gradient-to-r from-[var(--navy3)] to-[var(--navy2)]">
+                    <div className="flex items-center gap-3">
+                       <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--cyan)] to-[var(--purple)] p-[1px]">
+                          <div className="w-full h-full bg-[var(--navy2)] rounded-full flex items-center justify-center">
+                             <Zap className="w-4 h-4 text-[var(--cyan)]" />
+                          </div>
+                       </div>
+                       <div>
+                          <div className="text-[10px] font-black text-[var(--text)]">SYSTEM ANALYST</div>
+                          <div className="text-[8px] text-green-400 font-bold uppercase">Online & Operational</div>
+                       </div>
                     </div>
-                    <h1 className="text-4xl sm:text-6xl font-agale font-bold tracking-tighter text-[var(--foreground)] italic">
-                        The Matrix
-                    </h1>
-                </div>
-
-                <div className="flex gap-2 sm:gap-4 w-full md:w-auto">
-                    <div className="relative group flex-1 md:flex-initial">
-                        <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-[var(--foreground)]/30 group-focus-within:text-[var(--primary)] transition-colors" />
-                        <input
-                            type="text"
-                            placeholder="Filter candidates..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="bg-[var(--obsidian-card)]/50 border border-[var(--card-border)] rounded-xl sm:rounded-2xl pl-10 sm:pl-12 pr-4 sm:pr-6 py-3 sm:py-4 text-[10px] sm:text-xs focus:outline-none focus:border-[var(--primary)] w-full md:w-72 transition-all font-mono"
-                        />
+                 </div>
+                 <div className="p-4 space-y-3 max-h-48 overflow-y-auto custom-scrollbar">
+                    <div className="bg-[var(--navy2)] p-2.5 rounded-r-lg rounded-tl-lg text-[10px] text-[var(--muted)] leading-relaxed italic border-l-2 border-[var(--purple)]">
+                       I've prioritized Sarah R. for the Senior React role. Her technical score is 92%. Want to schedule?
                     </div>
-                    <button
-                        onClick={fetchCandidates}
-                        className="p-3 sm:p-4 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl sm:rounded-2xl hover:bg-[var(--foreground)]/5 transition-all active:scale-95"
-                    >
-                        <RefreshCcw className={`w-4 h-4 sm:w-5 sm:h-5 ${isLoading ? 'animate-spin text-[var(--primary)]' : 'text-[var(--foreground)]/50'}`} />
-                    </button>
-                </div>
-            </header>
+                 </div>
+                 <div className="p-3 border-t border-white/5 flex gap-2">
+                    <input className="flex-1 bg-transparent border-none outline-none text-[10px] text-[var(--text)] font-bold placeholder:text-[var(--dim)]" placeholder="Command AI..." />
+                    <MessageSquare className="w-3.5 h-3.5 text-[var(--dim)]" />
+                 </div>
+              </Card>
+           </section>
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-8 sm:mb-12">
-                <StatCard icon={Users} label="Profiles" value={candidates.length} trend="+12%" />
-                <StatCard icon={TrendingUp} label="Accuracy" value="84%" trend="+5%" />
-                <div className="hidden sm:block">
-                    <StatCard icon={Target} label="Mission" value={jobId ? "#" + jobId : "Global"} />
-                </div>
+           <section>
+              <SecTitle>Upcoming Signals</SecTitle>
+              <div className="space-y-2">
+                 {[
+                   { time: "09:30 AM", name: "David C.", role: "Sr. Backend", score: 92 },
+                   { time: "11:00 AM", name: "Maya V.", role: "ML Engineer", score: 87 },
+                 ].map((signal, idx) => (
+                   <div key={idx} className="flex items-center justify-between p-3 bg-[var(--navy2)] rounded-xl border border-white/5 hover:border-[var(--border-active)] transition-all cursor-pointer group">
+                      <div>
+                        <div className="text-[10px] font-black text-[var(--cyan)]">{signal.time}</div>
+                        <div className="text-[11px] font-bold text-[var(--text)] group-hover:text-[var(--cyan)] transition-colors">{signal.name}</div>
+                        <div className="text-[9px] text-[var(--dim)]">{signal.role}</div>
+                      </div>
+                      <NeuralBridge score={signal.score} />
+                   </div>
+                 ))}
+              </div>
+           </section>
+        </div>
 
-                <motion.div
-                    whileHover={{ scale: 1.02 }}
-                    className="glass-panel p-4 sm:p-6 rounded-2xl sm:rounded-3xl flex flex-col justify-center items-center text-center cursor-pointer border border-[var(--primary)]/30 bg-[var(--primary)]/5"
-                >
-                    <div className="w-8 h-8 sm:w-12 sm:h-12 bg-[var(--primary)] rounded-full flex items-center justify-center text-white mb-2 sm:mb-3 shadow-lg shadow-[var(--primary)]/30">
-                        <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
-                    </div>
-                    <h3 className="font-black uppercase tracking-widest text-[7px] sm:text-[8px] text-[var(--foreground)]">Auto-Screen</h3>
-                    <p className="text-[8px] sm:text-[10px] text-[var(--foreground)]/50 mt-0.5 sm:mt-1">Pipeline</p>
-                </motion.div>
+      </div>
 
-                <div className="sm:hidden">
-                    <StatCard icon={Target} label="Mission" value={jobId ? "#" + jobId : "Global"} />
-                </div>
-            </div>
-
-            {/* Main Kanban Board (Bento Layout) */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-32">
-                {columns.map((col) => {
-                    const colCandidates = filtered.filter(c =>
-                        (c.confidence_score || 'under recruiter review') === col.id
-                    );
-                    return (
-                        <div key={col.id} className="flex flex-col h-full">
-                            {/* Column Header */}
-                            <div className="flex items-center justify-between mb-4 sm:mb-8 px-2">
-                                <div className="flex items-center gap-3 sm:gap-4">
-                                    <span className="text-lg sm:text-xl filter grayscale opacity-60">{col.icon}</span>
-                                    <h2 className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.3em] text-[var(--foreground)]/40">
-                                        {col.title}
-                                    </h2>
-                                    <span className="px-2 py-0.5 sm:px-3 sm:py-1 bg-[var(--foreground)]/5 rounded-full text-[8px] sm:text-[10px] text-[var(--foreground)]/60 font-black border border-[var(--card-border)]">
-                                        {colCandidates.length}
-                                    </span>
-                                </div>
-                            </div>
-
-                            {/* Column Content */}
-                            <div className={`flex-1 rounded-2xl sm:rounded-[2.5rem] border ${col.color} p-4 sm:p-6 space-y-4 sm:space-y-6 backdrop-blur-md transition-all min-h-[200px]`}>
-                                <AnimatePresence mode="popLayout">
-                                    {colCandidates.map((cand) => (
-                                        <CandidateCard
-                                            key={cand.id}
-                                            candidate={{
-                                                ...cand,
-                                                status: cand.confidence_score || 'under recruiter review',
-                                                score: cand.score
-                                            }}
-                                            onViewReasoning={(c: any) => {
-                                                setSelectedCand(c);
-                                                setIsModalOpen(true);
-                                            }}
-                                            onApprove={handleApprove}
-                                            onDecline={handleDecline}
-                                        />
-                                    ))}
-                                </AnimatePresence>
-
-                                {colCandidates.length === 0 && (
-                                    <div className="h-32 sm:h-48 flex flex-col items-center justify-center text-center opacity-10">
-                                        <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[var(--foreground)]/10 rounded-full mb-4 sm:mb-6 animate-pulse" />
-                                        <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.5em]">Empty</p>
-                                    </div>
-                                )}
-                            </div>
+      {/* Priority Candidates Grid */}
+      <div className="pt-10">
+        <SecTitle>Priority Talent Streams</SecTitle>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+           {isLoading ? (
+             [1, 2, 3].map(i => <div key={i} className="h-32 bg-[var(--navy2)] rounded-2xl animate-pulse" />)
+           ) : candidates.length === 0 ? (
+              <div className="lg:col-span-3 text-center py-20 opacity-30 text-xs tracking-widest">NO TALENT SIGNALS DETECTED.</div>
+           ) : (
+             candidates.slice(0, 6).map((cand, idx) => (
+               <Card key={cand.id} className="cursor-pointer group">
+                  <div className="flex justify-between items-start mb-4">
+                     <div>
+                        <div className="text-xl font-black font-display text-[var(--text)] tracking-tighter transition-colors group-hover:text-[var(--cyan)]">{cand.name}</div>
+                        <div className="text-[10px] text-[var(--dim)] font-black uppercase tracking-widest">{cand.email}</div>
+                     </div>
+                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--cyan)] to-[var(--purple)] p-[1px] shadow-[0_0_15px_rgba(0,241,254,0.1)]">
+                        <div className="w-full h-full bg-[var(--navy)] rounded-full flex items-center justify-center text-[10px] font-black text-[var(--text)] italic">
+                          {cand.score}%
                         </div>
-                    );
-                })}
-            </div>
-
-            <ReasoningModal
-                candidate={selectedCand}
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-            />
+                     </div>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 mb-6">
+                     <NeuralBadge variant="cyan">Simulated: Match</NeuralBadge>
+                     <NeuralBadge variant="purple">Neural: High Fit</NeuralBadge>
+                  </div>
+                  <div className="flex justify-between items-center pt-4 border-t border-white/5 opacity-40 group-hover:opacity-100 transition-opacity">
+                     <div className="flex items-center gap-1.5 text-[9px] text-[var(--dim)] font-black uppercase tracking-widest">
+                        <Command className="w-3 h-3" /> View Insight
+                     </div>
+                     <div className="text-[var(--cyan)] text-xs transition-transform transform group-hover:translate-x-1">→</div>
+                  </div>
+               </Card>
+             ))
+           )}
         </div>
-    );
-}
-
-export default function RecruiterDashboard() {
-    return (
-        <Suspense fallback={
-            <div className="flex items-center justify-center py-40">
-                <RefreshCcw className="w-8 h-8 animate-spin text-[var(--primary)]" />
-            </div>
-        }>
-            <DashboardContent />
-        </Suspense>
-    );
+      </div>
+    </div>
+  );
 }

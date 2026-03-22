@@ -63,13 +63,18 @@ models.Base.metadata.create_all(bind=engine)
 # 5. App Instance
 app = FastAPI(title="GET IT! - AI Powered Resume screening API")
 
+# 5.5 CORS Configuration with Environment Variables
+ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "").split(",") if os.getenv("ALLOWED_ORIGINS") else [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "https://div0011.github.io",
+    "https://div0011.github.io/AI-POWERED-RESUME-ASSISTANCE",
+    "*"
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "https://div0011.github.io",
-        "https://div0011.github.io/AI-POWERED-RESUME-ASSISTANCE"
-    ],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -77,7 +82,7 @@ app.add_middleware(
 
 # 6. Routers
 # 6. Routers
-from routers import auth as auth_router, jobs, feedback, candidates, candidate, analytics, interview
+from routers import auth as auth_router, jobs, feedback, candidates, candidate, analytics, interview, user
 import auth
 app.include_router(auth_router.router, prefix="/auth", tags=["auth"])
 app.include_router(jobs.router, prefix="/jobs", tags=["jobs"])
@@ -86,6 +91,7 @@ app.include_router(candidates.router, prefix="/candidates", tags=["candidates"])
 app.include_router(candidate.router, prefix="/candidate", tags=["candidate"])
 app.include_router(analytics.router, prefix="/analytics", tags=["analytics"])
 app.include_router(interview.router, prefix="/interview", tags=["interview"])
+app.include_router(user.router, prefix="/user", tags=["user"])
 
 # 7. Monitoring
 Instrumentator().instrument(app).expose(app)
@@ -130,7 +136,10 @@ async def submit_candidate_async(
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    HOST = os.getenv("API_HOST", "0.0.0.0")
+    PORT = int(os.getenv("API_PORT", 8000))
+    logger.info(f"🚀 Starting API server on {HOST}:{PORT}")
+    uvicorn.run(app, host=HOST, port=PORT)
 
 # 9. Development Mode Bypass logic
 if os.getenv("DEV_MODE") == "true":

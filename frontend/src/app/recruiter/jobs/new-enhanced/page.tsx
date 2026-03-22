@@ -1,54 +1,41 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import {
-    Building2, Briefcase, DollarSign, Target, Sparkles,
-    ChevronRight, ChevronLeft, Check, Calendar, MapPin,
-    Users, GraduationCap, Award, Clock, Eye, Zap, Loader2
-} from 'lucide-react';
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import axios from 'axios';
-import { API_BASE } from '@/config';
-import { MultiStageProgress } from '@/components/ProgressComponents';
 import ReactMarkdown from 'react-markdown';
+import {
+    Target, Sparkles, ChevronRight,
+    Calendar, MapPin, Users, GraduationCap,
+    Clock, Loader2, DollarSign, CheckCircle2,
+    Briefcase, Type, ExternalLink, Globe, LayoutDashboard, Eye, Building2
+} from 'lucide-react';
+import { API_BASE } from '@/config';
+import { useAuth } from '@/context/AuthContext';
 
-interface JobFormData {
-    // Step 1: Basics
-    companyName: string;
-    jobTitle: string;
-    department: string;
-    employmentType: string;
-    location: string;
-    isRemote: boolean;
+// Schema Validation
+const formSchema = z.object({
+    jobTitle: z.string().min(2, "Job title is required"),
+    companyName: z.string().min(2, "Company name is required"),
+    department: z.string().optional(),
+    employmentType: z.string().optional(),
+    location: z.string().optional(),
+    isRemote: z.boolean(),
+    salaryMin: z.number().min(0),
+    salaryMax: z.number().min(0),
+    currency: z.string(),
+    yearsExperience: z.number().min(0),
+    educationLevel: z.string().optional(),
+    description: z.string().optional(), // Make optional because we might start without one
+    requiredSkills: z.array(z.string()),
+    benefits: z.array(z.string()),
+});
 
-    // Step 2: Compensation
-    salaryMin: number;
-    salaryMax: number;
-    currency: string;
-    contractDuration: string;
-    benefits: string[];
-
-    // Step 3: Must-Haves
-    requiredSkills: string[];
-    yearsExperience: number;
-    educationLevel: string;
-    certifications: string[];
-
-    // Step 4: Nice-to-Haves
-    preferredSkills: string[];
-    preferredExperience: string;
-    culturalTraits: string[];
-
-    // Step 5: AI Generated
-    description: string;
-
-    // Step 6: Publishing
-    applicationDeadline: string;
-    numOpenings: number;
-    visibility: string;
-    autoResponseTemplate: string;
-}
+type JobFormData = z.infer<typeof formSchema>;
 
 const DEPARTMENTS = [
     'Engineering', 'Product', 'Design', 'Marketing', 'Sales',
@@ -66,596 +53,482 @@ const EDUCATION_LEVELS = [
 
 const BENEFITS = [
     'Health Insurance', '401(k)', 'Stock Options', 'Flexible Hours',
-    'Remote Work', 'Unlimited PTO', 'Learning Budget', 'Gym Membership',
-    'Parental Leave', 'Commuter Benefits'
-];
-
-const CULTURAL_TRAITS = [
-    'Team Player', 'Self-Starter', 'Detail-Oriented', 'Creative',
-    'Analytical', 'Leadership', 'Adaptable', 'Communicative'
-];
-
-const VISIBILITY_OPTIONS = [
-    { value: 'public', label: 'Public - Anyone can apply' },
-    { value: 'internal', label: 'Internal - Company employees only' },
-    { value: 'invite', label: 'Invite-only - Specific candidates' }
+    'Remote Work', 'Unlimited PTO', 'Learning Budget', 'Gym Membership'
 ];
 
 export default function EnhancedJobCreationForm() {
     const router = useRouter();
-    const [currentStep, setCurrentStep] = useState(0);
+    const { user } = useAuth();
     const [isGenerating, setIsGenerating] = useState(false);
     const [isPublishing, setIsPublishing] = useState(false);
     const [error, setError] = useState('');
+    const [skillInput, setSkillInput] = useState('');
+    const [previewScale, setPreviewScale] = useState(1);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [publishedJobId, setPublishedJobId] = useState<number | null>(null);
+    const previewContainerRef = useRef<HTMLDivElement>(null);
 
-    const [formData, setFormData] = useState<JobFormData>({
-        companyName: '',
-        jobTitle: '',
-        department: '',
-        employmentType: '',
-        location: '',
-        isRemote: false,
-        salaryMin: 0,
-        salaryMax: 0,
-        currency: 'USD',
-        contractDuration: '',
-        benefits: [],
-        requiredSkills: [],
-        yearsExperience: 0,
-        educationLevel: '',
-        certifications: [],
-        preferredSkills: [],
-        preferredExperience: '',
-        culturalTraits: [],
-        description: '',
-        applicationDeadline: '',
-        numOpenings: 1,
-        visibility: 'public',
-        autoResponseTemplate: 'Thank you for your application! We will review it and get back to you soon.'
+    const {
+        register,
+        control,
+        handleSubmit,
+        watch,
+        setValue,
+        formState: { errors }
+    } = useForm<JobFormData>({
+        resolver: zodResolver(formSchema) as any,
+        defaultValues: {
+            jobTitle: '',
+            companyName: '',
+            department: '',
+            employmentType: 'Full-time',
+            location: '',
+            isRemote: false,
+            salaryMin: 90000,
+            salaryMax: 150000,
+            currency: 'USD',
+            yearsExperience: 2,
+            educationLevel: "Bachelor's Degree",
+            description: '',
+            requiredSkills: [],
+            benefits: [],
+        }
     });
 
-    const [currentInput, setCurrentInput] = useState('');
-    const [generationStages, setGenerationStages] = useState<Array<{
-        label: string;
-        status: 'pending' | 'active' | 'complete' | 'error';
-        message: string;
-    }>>([]);
-    const [currentGenerationStage, setCurrentGenerationStage] = useState(-1);
+    const formValues = watch();
 
-    const updateField = (field: keyof JobFormData, value: any) => {
-        setFormData(prev => ({ ...prev, [field]: value }));
-    };
+    useEffect(() => {
+        const handleResize = () => {
+            if (previewContainerRef.current) {
+                const containerWidth = previewContainerRef.current.offsetWidth;
+                const baseWidth = 600;
+                const scale = Math.min(containerWidth / baseWidth, 1);
+                setPreviewScale(scale);
+            }
+        };
 
-    const addToArray = (field: keyof JobFormData, value: string) => {
-        const currentArray = formData[field] as string[];
-        if (!currentArray.includes(value)) {
-            updateField(field, [...currentArray, value]);
-        }
-    };
-
-    const removeFromArray = (field: keyof JobFormData, value: string) => {
-        const currentArray = formData[field] as string[];
-        updateField(field, currentArray.filter(item => item !== value));
-    };
-
-    const toggleArrayItem = (field: keyof JobFormData, value: string) => {
-        const currentArray = formData[field] as string[];
-        if (currentArray.includes(value)) {
-            removeFromArray(field, value);
-        } else {
-            addToArray(field, value);
-        }
-    };
-
-    const canProceed = () => {
-        switch (currentStep) {
-            case 0: return formData.companyName && formData.jobTitle && formData.department && formData.employmentType;
-            case 1: return formData.salaryMin > 0 && formData.salaryMax > formData.salaryMin;
-            case 2: return formData.requiredSkills.length > 0 && formData.yearsExperience >= 0;
-            case 3: return true; // Optional step
-            case 4: return formData.description.length > 0;
-            case 5: return formData.applicationDeadline && formData.numOpenings > 0;
-            default: return false;
-        }
-    };
+        window.addEventListener('resize', handleResize);
+        handleResize();
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     const generateDescription = async () => {
+        if (!formValues.jobTitle || !formValues.companyName) {
+            setError("Please enter Job Title and Company Name to generate description.");
+            return;
+        }
+
         setIsGenerating(true);
         setError('');
-        setCurrentGenerationStage(0);
-
-        setGenerationStages([
-            { label: 'Analyzing Requirements', status: 'pending', message: '' },
-            { label: 'Generating Description', status: 'pending', message: '' },
-            { label: 'Formatting Output', status: 'pending', message: '' }
-        ]);
 
         try {
-            // Stage 1
-            setGenerationStages(prev => prev.map((s, i) =>
-                i === 0 ? { ...s, status: 'active', message: 'Processing job details...' } : s
-            ));
-            await new Promise(r => setTimeout(r, 600));
-            setGenerationStages(prev => prev.map((s, i) =>
-                i === 0 ? { ...s, status: 'complete', message: 'Requirements analyzed' } : s
-            ));
-            setCurrentGenerationStage(1);
-
-            // Stage 2 - API Call
-            setGenerationStages(prev => prev.map((s, i) =>
-                i === 1 ? { ...s, status: 'active', message: 'AI generating content...' } : s
-            ));
-
-            const prompt = {
-                company: formData.companyName,
-                title: formData.jobTitle,
-                department: formData.department,
-                type: formData.employmentType,
-                location: formData.isRemote ? 'Remote' : formData.location,
-                required_skills: formData.requiredSkills,
-                preferred_skills: formData.preferredSkills,
-                years_experience: formData.yearsExperience,
-                education: formData.educationLevel
-            };
-
-            const res = await axios.post(`${API_BASE}/jobs/expand`, {
-                keywords: [...formData.requiredSkills, ...formData.preferredSkills]
+            const keywords = [...formValues.requiredSkills, formValues.jobTitle, formValues.department || "General"];
+            const res = await axios.post(`${API_BASE}/jobs/expand`, { keywords }, {
+                withCredentials: true,
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
             });
-
-            setGenerationStages(prev => prev.map((s, i) =>
-                i === 1 ? { ...s, status: 'complete', message: 'Description generated' } : s
-            ));
-            setCurrentGenerationStage(2);
-
-            // Stage 3
-            setGenerationStages(prev => prev.map((s, i) =>
-                i === 2 ? { ...s, status: 'active', message: 'Finalizing...' } : s
-            ));
-            await new Promise(r => setTimeout(r, 400));
-            setGenerationStages(prev => prev.map((s, i) =>
-                i === 2 ? { ...s, status: 'complete', message: 'Ready!' } : s
-            ));
-
-            updateField('description', res.data.suggested_description);
-            await new Promise(r => setTimeout(r, 500));
-            setCurrentStep(5);
+            setValue('description', res.data.suggested_description);
+            setValue('jobTitle', res.data.suggested_title);
         } catch (err: any) {
-            setError(err.response?.data?.detail || 'Generation failed');
-            if (currentGenerationStage >= 0) {
-                setGenerationStages(prev => prev.map((s, i) =>
-                    i === currentGenerationStage ? { ...s, status: 'error', message: 'Failed' } : s
-                ));
-            }
+            setError(err.response?.data?.detail || 'Description generation failed.');
         } finally {
             setIsGenerating(false);
-            setCurrentGenerationStage(-1);
         }
     };
 
-    const publishJob = async () => {
+    const onSubmit = async (data: JobFormData) => {
         setIsPublishing(true);
         setError('');
         try {
-            // Map camelCase to snake_case for backend
             const backendData = {
-                title: formData.jobTitle,
-                description: formData.description,
-                company_name: formData.companyName,
-                department: formData.department,
-                employment_type: formData.employmentType,
-                location: formData.location,
-                is_remote: formData.isRemote,
-                salary_min: formData.salaryMin,
-                salary_max: formData.salaryMax,
-                currency: formData.currency,
-                benefits: formData.benefits,
-                required_skills: formData.requiredSkills,
-                preferred_skills: formData.preferredSkills,
-                years_experience: formData.yearsExperience,
-                education_level: formData.educationLevel,
-                application_deadline: formData.applicationDeadline,
-                visibility: formData.visibility,
-                num_openings: formData.numOpenings
+                title: data.jobTitle,
+                description: data.description || "",
+                company_name: data.companyName,
+                department: data.department || "",
+                employment_type: data.employmentType || "Full-time",
+                location: data.location || "",
+                is_remote: data.isRemote,
+                salary_min: data.salaryMin,
+                salary_max: data.salaryMax,
+                currency: data.currency,
+                benefits: data.benefits,
+                required_skills: data.requiredSkills,
+                years_experience: data.yearsExperience,
+                education_level: data.educationLevel || "Bachelor's Degree",
+                visibility: "public"
             };
 
-            const res = await axios.post(`${API_BASE}/jobs/`, backendData);
-            router.push(`/recruiter/dashboard?job_id=${res.data.id}`);
+            const res = await axios.post(`${API_BASE}/jobs/`, backendData, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            setPublishedJobId(res.data.id);
+            setShowSuccessModal(true);
         } catch (err: any) {
-            setError(err.response?.data?.detail || 'Publishing failed');
+            setError(err.response?.data?.detail || 'Job publishing failed.');
         } finally {
             setIsPublishing(false);
         }
     };
 
-    const renderStep = () => {
-        switch (currentStep) {
-            case 0:
-                return (
-                    <div className="space-y-4 sm:space-y-6">
-                        <h2 className="text-xl sm:text-2xl font-black uppercase tracking-wider flex items-center gap-3">
-                            <Building2 className="w-5 h-5 sm:w-6 sm:h-6 text-[var(--primary)]" />
-                            Role Basics
-                        </h2>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-                            <div className="space-y-1 sm:space-y-2">
-                                <label className="text-[10px] sm:text-xs font-bold uppercase tracking-widest opacity-60">Company *</label>
-                                <input
-                                    type="text"
-                                    value={formData.companyName}
-                                    onChange={(e) => updateField('companyName', e.target.value)}
-                                    className="w-full p-4 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl outline-none focus:border-[var(--primary)] transition-all"
-                                    placeholder="Acme Corp"
-                                />
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold uppercase tracking-widest opacity-60">Job Title *</label>
-                                <input
-                                    type="text"
-                                    value={formData.jobTitle}
-                                    onChange={(e) => updateField('jobTitle', e.target.value)}
-                                    className="w-full p-4 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl outline-none focus:border-[var(--primary)] transition-all"
-                                    placeholder="Senior Backend Engineer"
-                                />
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold uppercase tracking-widest opacity-60">Department *</label>
-                                <select
-                                    value={formData.department}
-                                    onChange={(e) => updateField('department', e.target.value)}
-                                    className="w-full p-4 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl outline-none focus:border-[var(--primary)] transition-all"
-                                >
-                                    <option value="">Select Department</option>
-                                    {DEPARTMENTS.map(dept => (
-                                        <option key={dept} value={dept}>{dept}</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold uppercase tracking-widest opacity-60">Employment Type *</label>
-                                <select
-                                    value={formData.employmentType}
-                                    onChange={(e) => updateField('employmentType', e.target.value)}
-                                    className="w-full p-4 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl outline-none focus:border-[var(--primary)] transition-all"
-                                >
-                                    <option value="">Select Type</option>
-                                    {EMPLOYMENT_TYPES.map(type => (
-                                        <option key={type} value={type}>{type}</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold uppercase tracking-widest opacity-60">Location</label>
-                                <input
-                                    type="text"
-                                    value={formData.location}
-                                    onChange={(e) => updateField('location', e.target.value)}
-                                    disabled={formData.isRemote}
-                                    className="w-full p-4 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl outline-none focus:border-[var(--primary)] transition-all disabled:opacity-50"
-                                    placeholder="San Francisco, CA"
-                                />
-                            </div>
-
-                            <div className="flex items-center gap-3 pt-8">
-                                <input
-                                    type="checkbox"
-                                    id="remote"
-                                    checked={formData.isRemote}
-                                    onChange={(e) => updateField('isRemote', e.target.checked)}
-                                    className="w-5 h-5 accent-[var(--primary)]"
-                                />
-                                <label htmlFor="remote" className="text-sm font-bold uppercase tracking-wider cursor-pointer">
-                                    Remote Position
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                );
-
-            case 1: // Compensation & Duration
-                return (
-                    <div className="space-y-4 sm:space-y-6">
-                        <h2 className="text-xl sm:text-2xl font-black uppercase tracking-wider flex items-center gap-3">
-                            <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />
-                            Compensation
-                        </h2>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-                            <div className="space-y-1 sm:space-y-2">
-                                <label className="text-[10px] sm:text-xs font-bold uppercase tracking-widest opacity-60">Min Salary ({formData.currency})</label>
-                                <input
-                                    type="number"
-                                    value={formData.salaryMin}
-                                    onChange={(e) => updateField('salaryMin', parseInt(e.target.value))}
-                                    className="w-full p-4 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl outline-none focus:border-[var(--primary)] text-emerald-400 font-mono"
-                                />
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold uppercase tracking-widest opacity-60">Salary Max ({formData.currency})</label>
-                                <input
-                                    type="number"
-                                    value={formData.salaryMax}
-                                    onChange={(e) => updateField('salaryMax', parseInt(e.target.value))}
-                                    className="w-full p-4 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl outline-none focus:border-[var(--primary)] text-emerald-400 font-mono"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="space-y-4">
-                            <label className="text-xs font-bold uppercase tracking-widest opacity-60">Benefits</label>
-                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                                {BENEFITS.map(benefit => (
-                                    <button
-                                        key={benefit}
-                                        onClick={() => toggleArrayItem('benefits', benefit)}
-                                        className={`p-3 text-[10px] font-bold uppercase tracking-wider rounded-xl border transition-all ${formData.benefits.includes(benefit)
-                                            ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400'
-                                            : 'bg-[var(--card-bg)] border-[var(--card-border)] opacity-40 hover:opacity-100'
-                                            }`}
-                                    >
-                                        {benefit}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                );
-
-            case 2: // Must-Haves
-                return (
-                    <div className="space-y-4 sm:space-y-6">
-                        <h2 className="text-xl sm:text-2xl font-black uppercase tracking-wider flex items-center gap-3">
-                            <Target className="w-5 h-5 sm:w-6 sm:h-6 text-rose-400" />
-                            Requirements
-                        </h2>
-
-                        <div className="space-y-3 sm:space-y-4">
-                            <label className="text-[10px] sm:text-xs font-bold uppercase tracking-widest opacity-60">Skills (Press Enter)</label>
-                            <input
-                                type="text"
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter' && currentInput.trim()) {
-                                        addToArray('requiredSkills', currentInput.trim());
-                                        setCurrentInput('');
-                                    }
-                                }}
-                                value={currentInput}
-                                onChange={(e) => setCurrentInput(e.target.value)}
-                                className="w-full p-4 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl outline-none focus:border-[var(--primary)]"
-                                placeholder="e.g. Python, AWS, React"
-                            />
-                            <div className="flex flex-wrap gap-2">
-                                {formData.requiredSkills.map(skill => (
-                                    <div key={skill} className="px-4 py-2 bg-rose-500/10 border border-rose-500/30 text-rose-400 rounded-full text-xs font-bold flex items-center gap-2">
-                                        {skill}
-                                        <button onClick={() => removeFromArray('requiredSkills', skill)}>×</button>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold uppercase tracking-widest opacity-60">Years of Experience</label>
-                                <input
-                                    type="number"
-                                    value={formData.yearsExperience}
-                                    onChange={(e) => updateField('yearsExperience', parseInt(e.target.value))}
-                                    className="w-full p-4 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl outline-none focus:border-[var(--primary)]"
-                                />
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold uppercase tracking-widest opacity-60">Education Level</label>
-                                <select
-                                    value={formData.educationLevel}
-                                    onChange={(e) => updateField('educationLevel', e.target.value)}
-                                    className="w-full p-4 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl outline-none focus:border-[var(--primary)]"
-                                >
-                                    <option value="">Select Level</option>
-                                    {EDUCATION_LEVELS.map(level => (
-                                        <option key={level} value={level}>{level}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                );
-
-            case 3: // Cultural & Optional
-                return (
-                    <div className="space-y-4 sm:space-y-6">
-                        <h2 className="text-xl sm:text-2xl font-black uppercase tracking-wider flex items-center gap-3">
-                            <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-purple-400" />
-                            Culture Fit
-                        </h2>
-
-                        <div className="space-y-4">
-                            <label className="text-xs font-bold uppercase tracking-widest opacity-60">Ideal Values</label>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                {CULTURAL_TRAITS.map(trait => (
-                                    <button
-                                        key={trait}
-                                        onClick={() => toggleArrayItem('culturalTraits', trait)}
-                                        className={`p-3 text-[10px] font-bold uppercase tracking-wider rounded-xl border transition-all ${formData.culturalTraits.includes(trait)
-                                            ? 'bg-purple-500/20 border-purple-500 text-purple-400'
-                                            : 'bg-[var(--card-bg)] border-[var(--card-border)] opacity-40 hover:opacity-100'
-                                            }`}
-                                    >
-                                        {trait}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-xs font-bold uppercase tracking-widest opacity-60">Additional Notes (Optional)</label>
-                            <textarea
-                                value={formData.preferredExperience}
-                                onChange={(e) => updateField('preferredExperience', e.target.value)}
-                                className="w-full h-32 p-4 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl outline-none focus:border-[var(--primary)] resize-none"
-                                placeholder="Describe the ideal candidate's personality..."
-                            />
-                        </div>
-                    </div>
-                );
-
-            case 4: // AI Generation Step
-                return (
-                    <div className="space-y-4 sm:space-y-6">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                            <h2 className="text-xl sm:text-2xl font-black uppercase tracking-wider flex items-center gap-3">
-                                <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-[var(--primary)]" />
-                                AI Brief
-                            </h2>
-                            <button
-                                onClick={generateDescription}
-                                disabled={isGenerating}
-                                className="w-full sm:w-auto px-4 py-2 sm:px-6 sm:py-3 bg-[var(--primary)]/10 text-[var(--primary)] border border-[var(--primary)]/30 rounded-xl text-[10px] sm:text-xs font-bold uppercase tracking-widest hover:bg-[var(--primary)]/20 transition-all flex items-center justify-center gap-2"
-                            >
-                                {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                                Re-Synthesize
-                            </button>
-                        </div>
-
-                        <div className="bg-[var(--obsidian)]/50 border border-[var(--card-border)] rounded-2xl p-4 sm:p-8 h-[300px] sm:h-[450px] overflow-y-auto custom-scrollbar prose prose-invert prose-xs sm:prose-sm max-w-none">
-                            <ReactMarkdown>{formData.description || "Synthesizing mission brief..."}</ReactMarkdown>
-                        </div>
-                    </div>
-                );
-
-            case 5: // Final Review & Visibility
-                return (
-                    <div className="space-y-6 max-h-[60vh] overflow-y-auto pr-4 custom-scrollbar">
-                        <h2 className="text-2xl font-black uppercase tracking-wider flex items-center gap-3">
-                            <Eye className="w-6 h-6 text-orange-400" />
-                            Final Review & Deployment
-                        </h2>
-
-                        <div className="p-6 bg-black/40 rounded-2xl border border-[var(--card-border)] space-y-4">
-                            <div className="flex justify-between items-start">
-                                <div>
-                                    <h3 className="text-xl font-bold font-agale">{formData.jobTitle}</h3>
-                                    <p className="text-sm opacity-60">{formData.companyName} • {formData.location}</p>
-                                </div>
-                                <div className="px-3 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-lg text-[10px] font-black uppercase">
-                                    {formData.employmentType}
-                                </div>
-                            </div>
-                            <div className="shrink-0 h-[1px] bg-[var(--card-border)]" />
-                            <div className="prose prose-invert prose-sm max-w-none">
-                                <ReactMarkdown>{formData.description}</ReactMarkdown>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold uppercase tracking-widest opacity-60">Submission Deadline</label>
-                                <input
-                                    type="date"
-                                    value={formData.applicationDeadline}
-                                    onChange={(e) => updateField('applicationDeadline', e.target.value)}
-                                    className="w-full p-4 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl outline-none focus:border-[var(--primary)]"
-                                />
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold uppercase tracking-widest opacity-60">Access Level</label>
-                                <select
-                                    value={formData.visibility}
-                                    onChange={(e) => updateField('visibility', e.target.value)}
-                                    className="w-full p-4 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl outline-none focus:border-[var(--primary)]"
-                                >
-                                    {VISIBILITY_OPTIONS.map(opt => (
-                                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                );
-
-            default:
-                return null;
-        }
-    };
-
     return (
-        <div className="min-h-screen pt-24 sm:pt-32 px-4 sm:px-12 pb-12">
-            <div className="max-w-5xl mx-auto">
-                {/* Progress Indicator */}
-                <div className="mb-8 sm:mb-12">
-                    <div className="flex items-center justify-between mb-4 overflow-x-auto pb-2 no-scrollbar">
-                        {['Basics', 'Comps', 'Must', 'Nice', 'AI', 'Pub'].map((step, idx) => (
-                            <div key={idx} className="flex items-center shrink-0">
-                                <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-xs sm:text-sm transition-all ${idx < currentStep ? 'bg-emerald-500 text-white' :
-                                    idx === currentStep ? 'bg-[var(--primary)] text-[var(--obsidian)]' :
-                                        'bg-[var(--card-bg)] text-[var(--foreground)]/40'
-                                    }`}>
-                                    {idx < currentStep ? <Check className="w-4 h-4 sm:w-5 sm:h-5" /> : idx + 1}
-                                </div>
-                                {idx < 5 && (
-                                    <div className={`w-4 sm:w-12 h-1 mx-1 sm:mx-2 ${idx < currentStep ? 'bg-emerald-500' : 'bg-[var(--card-border)]'}`} />
-                                )}
+        <div className="min-h-screen pt-4 px-4 sm:px-8 pb-12 font-sans bg-[var(--background)] text-[var(--foreground)]">
+            <AnimatePresence>
+                {showSuccessModal && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.95, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.95, opacity: 0 }}
+                            className="bg-[var(--obsidian)] border border-[var(--primary)]/30 rounded-3xl p-8 max-w-sm w-full text-center relative overflow-hidden"
+                        >
+                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[var(--primary)] to-transparent" />
+                            <div className="w-16 h-16 bg-[var(--primary)]/10 text-[var(--primary)] rounded-full flex items-center justify-center mx-auto mb-6">
+                                <CheckCircle2 className="w-8 h-8" />
                             </div>
-                        ))}
-                    </div>
-                    <div className="text-center text-[10px] sm:text-xs font-bold uppercase tracking-widest opacity-60">
-                        Mission Step {currentStep + 1} / 6
+                            <h2 className="text-2xl font-agale font-bold mb-2">Deployed!</h2>
+                            <p className="text-sm text-gray-400 mb-8">
+                                Your mission is now live on the neural net. Top candidates are being analyzed right now.
+                            </p>
+                            <div className="flex flex-col gap-3">
+                                <button
+                                    onClick={() => router.push(`/recruiter/dashboard?job_id=${publishedJobId}`)}
+                                    className="w-full py-3 bg-[var(--primary)] text-black rounded-xl font-bold text-sm hover:brightness-110 transition-all shadow-[0_0_15px_rgba(0,232,255,0.3)]"
+                                >
+                                    Go to Dashboard
+                                </button>
+                                <button
+                                    onClick={() => router.push(`/candidate/jobs`)}
+                                    className="w-full py-3 bg-transparent border border-[var(--card-border)] text-white rounded-xl font-bold text-sm hover:bg-white/5 transition-all"
+                                >
+                                    View as Candidate
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+            <header className="max-w-7xl mx-auto mb-8 flex items-center justify-between sticky top-0 z-40 py-4 bg-[var(--background)]/80 backdrop-blur-md">
+                <div className="flex items-center gap-4">
+                    <button
+                        onClick={() => router.push('/recruiter/dashboard')}
+                        className="p-2 rounded-full hover:bg-[var(--foreground)]/5 transition-colors"
+                    >
+                        <ChevronRight className="w-5 h-5 rotate-180 opacity-60" />
+                    </button>
+                    <div>
+                        <h1 className="text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[var(--primary)] to-white font-agale">
+                            New Job Post Deployment
+                        </h1>
                     </div>
                 </div>
+                <div className="flex gap-3">
+                    <button
+                        onClick={handleSubmit(onSubmit)}
+                        disabled={isPublishing}
+                        className="px-6 py-2.5 bg-[var(--primary)] text-black rounded-xl font-bold text-xs hover:brightness-110 disabled:opacity-50 transition-all flex items-center gap-2 shadow-[0_0_15px_rgba(0,232,255,0.3)]"
+                    >
+                        {isPublishing ? <Loader2 className="w-4 h-4 animate-spin" /> : <ExternalLink className="w-4 h-4" />}
+                        {isPublishing ? "Publishing..." : "Publish Job Post"}
+                    </button>
+                </div>
+            </header>
 
-                {/* Form Content */}
-                <motion.div
-                    key={currentStep}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    className="glass-panel p-6 sm:p-8 rounded-2xl sm:rounded-3xl border border-[var(--card-border)]"
-                >
-                    {renderStep()}
+            <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 h-[calc(100vh-120px)]">
 
+                {/* LEFT COLUMN - THE FORM EDITOR */}
+                <div className="lg:col-span-6 space-y-8 overflow-y-auto pr-4 pb-20 custom-scrollbar">
                     {error && (
-                        <div className="mt-6 p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-500 text-sm">
+                        <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-500 text-xs font-bold uppercase tracking-widest text-center">
                             {error}
                         </div>
                     )}
 
-                    {/* Navigation Buttons */}
-                    <div className="flex items-center justify-between mt-8 pt-6 border-t border-[var(--card-border)]">
-                        <button
-                            onClick={() => setCurrentStep(prev => Math.max(0, prev - 1))}
-                            disabled={currentStep === 0}
-                            className="flex items-center gap-2 px-6 py-3 rounded-xl font-bold uppercase tracking-wider text-sm disabled:opacity-30 hover:bg-[var(--card-bg)] transition-all"
-                        >
-                            <ChevronLeft className="w-4 h-4" />
-                            Back
-                        </button>
+                    <form className="space-y-6">
+                        {/* 1. Core Meta */}
+                        <div className="glass-panel p-6 rounded-3xl border border-[var(--card-border)] space-y-6">
+                            <h2 className="text-xl font-agale flex items-center gap-2"><Briefcase className="w-5 h-5 text-[var(--primary)]" /> Core Metadata</h2>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="text-[10px] uppercase tracking-wider font-bold opacity-50 block mb-2">Job Title *</label>
+                                    <input
+                                        {...register("jobTitle")}
+                                        className="w-full bg-[var(--obsidian)]/50 border border-[var(--card-border)] rounded-xl px-4 py-3 text-sm focus:border-[var(--primary)] outline-none transition-all"
+                                        placeholder="e.g. Senior Frontend Engineer"
+                                    />
+                                    {errors.jobTitle && <span className="text-rose-500 text-xs">{errors.jobTitle.message}</span>}
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="text-[10px] uppercase tracking-wider font-bold opacity-50 block mb-2">Company Name *</label>
+                                        <input
+                                            {...register("companyName")}
+                                            className="w-full bg-[var(--obsidian)]/50 border border-[var(--card-border)] rounded-xl px-4 py-3 text-sm focus:border-[var(--primary)] outline-none transition-all"
+                                            placeholder="Your Company"
+                                        />
+                                        {errors.companyName && <span className="text-rose-500 text-xs">{errors.companyName.message}</span>}
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] uppercase tracking-wider font-bold opacity-50 block mb-2">Department</label>
+                                        <select
+                                            {...register("department")}
+                                            className="w-full bg-[var(--obsidian)]/50 border border-[var(--card-border)] rounded-xl px-4 py-3 text-sm focus:border-[var(--primary)] outline-none transition-all appearance-none text-[var(--foreground)]"
+                                        >
+                                            <option value="">Select Department</option>
+                                            {DEPARTMENTS.map(d => <option key={d} value={d} className="bg-[var(--obsidian)]">{d}</option>)}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-                        <button
-                            onClick={() => {
-                                if (currentStep === 4) {
-                                    generateDescription();
-                                } else if (currentStep === 5) {
-                                    publishJob();
-                                } else {
-                                    setCurrentStep(prev => prev + 1);
-                                }
-                            }}
-                            disabled={!canProceed() || isGenerating || isPublishing}
-                            className="flex items-center gap-2 px-8 py-4 bg-[var(--primary)] text-[var(--obsidian)] rounded-xl font-black uppercase tracking-wider text-sm hover:opacity-90 disabled:opacity-30 transition-all"
-                        >
-                            {currentStep === 4 ? 'Generate Description' :
-                                currentStep === 5 ? 'Publish Job' : 'Continue'}
-                            <ChevronRight className="w-4 h-4" />
-                        </button>
+                        {/* 2. Logistics & Compensation */}
+                        <div className="glass-panel p-6 rounded-3xl border border-[var(--card-border)] space-y-6">
+                            <h2 className="text-xl font-agale flex items-center gap-2"><Globe className="w-5 h-5 text-[var(--primary)]" /> Logistics & Compensation</h2>
+
+                            <div className="grid grid-cols-2 gap-6">
+                                <div>
+                                    <label className="text-[10px] uppercase tracking-wider font-bold opacity-50 block mb-2">Employment Type</label>
+                                    <select
+                                        {...register("employmentType")}
+                                        className="w-full bg-[var(--obsidian)]/50 border border-[var(--card-border)] rounded-xl px-4 py-3 text-sm focus:border-[var(--primary)] outline-none transition-all appearance-none text-[var(--foreground)]"
+                                    >
+                                        {EMPLOYMENT_TYPES.map(d => <option key={d} value={d} className="bg-[var(--obsidian)]">{d}</option>)}
+                                    </select>
+                                </div>
+                                <div className="space-y-4">
+                                    <label className="text-[10px] uppercase tracking-wider font-bold opacity-50 block">Work Model</label>
+                                    <label className="flex items-center gap-3 p-3 border border-[var(--card-border)] rounded-xl cursor-pointer hover:bg-[var(--foreground)]/5 transition-colors bg-[var(--obsidian)]/30">
+                                        <input
+                                            type="checkbox"
+                                            {...register("isRemote")}
+                                            className="w-4 h-4 accent-[var(--primary)]"
+                                        />
+                                        <span className="text-xs font-bold tracking-wide">Remote Position</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="text-[10px] uppercase tracking-wider font-bold opacity-50 block mb-2">Location</label>
+                                <input
+                                    {...register("location")}
+                                    disabled={formValues.isRemote}
+                                    className="w-full bg-[var(--obsidian)]/50 border border-[var(--card-border)] rounded-xl px-4 py-3 text-sm focus:border-[var(--primary)] outline-none transition-all disabled:opacity-30"
+                                    placeholder={formValues.isRemote ? "Remote Worldwide" : "City, Country"}
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-3 gap-4 items-center">
+                                <div>
+                                    <label className="text-[10px] uppercase tracking-wider font-bold opacity-50 block mb-2">Min Salary</label>
+                                    <input type="number" {...register("salaryMin", { valueAsNumber: true })} className="w-full bg-[var(--obsidian)]/50 border border-[var(--card-border)] rounded-xl px-4 py-3 text-sm focus:border-[var(--primary)] outline-none transition-all" />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] uppercase tracking-wider font-bold opacity-50 block mb-2">Max Salary</label>
+                                    <input type="number" {...register("salaryMax", { valueAsNumber: true })} className="w-full bg-[var(--obsidian)]/50 border border-[var(--card-border)] rounded-xl px-4 py-3 text-sm focus:border-[var(--primary)] outline-none transition-all" />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] uppercase tracking-wider font-bold opacity-50 block mb-2">Currency</label>
+                                    <select {...register("currency")} className="w-full bg-[var(--obsidian)]/50 border border-[var(--card-border)] rounded-xl px-4 py-3 text-sm focus:border-[var(--primary)] outline-none transition-all appearance-none text-[var(--foreground)]">
+                                        <option value="USD">USD ($)</option>
+                                        <option value="EUR">EUR (€)</option>
+                                        <option value="GBP">GBP (£)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 3. Skill Matrices */}
+                        <div className="glass-panel p-6 rounded-3xl border border-[var(--card-border)] space-y-6">
+                            <h2 className="text-xl font-agale flex items-center gap-2"><Target className="w-5 h-5 text-[var(--primary)]" /> Matrix Targets</h2>
+
+                            <div className="grid grid-cols-2 gap-6">
+                                <div>
+                                    <label className="text-[10px] uppercase tracking-wider font-bold opacity-50 block mb-2">Years of Exp</label>
+                                    <input type="number" {...register("yearsExperience", { valueAsNumber: true })} className="w-full bg-[var(--obsidian)]/50 border border-[var(--card-border)] rounded-xl px-4 py-3 text-sm focus:border-[var(--primary)] outline-none transition-all" />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] uppercase tracking-wider font-bold opacity-50 block mb-2">Education</label>
+                                    <select {...register("educationLevel")} className="w-full bg-[var(--obsidian)]/50 border border-[var(--card-border)] rounded-xl px-4 py-3 text-sm focus:border-[var(--primary)] outline-none transition-all appearance-none text-[var(--foreground)]">
+                                        {EDUCATION_LEVELS.map(d => <option key={d} value={d} className="bg-[var(--obsidian)]">{d}</option>)}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="text-[10px] uppercase tracking-wider font-bold opacity-50 block mb-2">Mandatory Skills (Type & Enter)</label>
+                                <div className="flex flex-wrap gap-2 mb-3">
+                                    {formValues.requiredSkills.map(skill => (
+                                        <span key={skill} className="px-3 py-1.5 bg-[var(--primary)]/10 text-[var(--primary)] border border-[var(--primary)]/30 rounded-lg text-xs font-bold flex items-center gap-2">
+                                            {skill}
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const updated = formValues.requiredSkills.filter(s => s !== skill);
+                                                    setValue('requiredSkills', updated);
+                                                }}
+                                                className="hover:opacity-70 text-rose-400">×</button>
+                                        </span>
+                                    ))}
+                                </div>
+                                <input
+                                    value={skillInput}
+                                    onChange={(e) => setSkillInput(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                            if (skillInput.trim() && !formValues.requiredSkills.includes(skillInput.trim())) {
+                                                setValue('requiredSkills', [...formValues.requiredSkills, skillInput.trim()]);
+                                                setSkillInput('');
+                                            }
+                                        }
+                                    }}
+                                    className="w-full bg-[var(--obsidian)]/50 border border-[var(--card-border)] rounded-xl px-4 py-3 text-sm focus:border-[var(--primary)] outline-none transition-all"
+                                    placeholder="e.g. React, Python, AWS..."
+                                />
+                            </div>
+                        </div>
+
+                        {/* 4. AI Generated Description */}
+                        <div className="glass-panel p-6 rounded-3xl border border-[var(--card-border)] space-y-6 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 p-10 opacity-5 blur-sm scale-150 rotate-12 pointer-events-none">
+                                <Sparkles className="w-32 h-32" />
+                            </div>
+                            <div className="relative z-10">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h2 className="text-xl font-agale flex items-center gap-2"><Type className="w-5 h-5 text-[var(--primary)]" /> Mission Description</h2>
+                                    <button
+                                        type="button"
+                                        onClick={generateDescription}
+                                        disabled={isGenerating || !formValues.jobTitle}
+                                        className="text-[10px] font-black tracking-widest uppercase text-white bg-gradient-to-r from-purple-600 to-[var(--primary)] px-4 py-2 rounded-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2 shadow-[0_0_15px_rgba(0,232,255,0.4)] disabled:opacity-50"
+                                    >
+                                        {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                                        {isGenerating ? "Synthesizing..." : "Auto-Draft AI"}
+                                    </button>
+                                </div>
+                                <textarea
+                                    {...register("description")}
+                                    className="w-full h-80 bg-[var(--obsidian)]/50 border border-[var(--card-border)] rounded-xl p-6 text-sm font-mono leading-relaxed focus:border-[var(--primary)] outline-none transition-all resize-none custom-scrollbar"
+                                    placeholder="The AI will weave the exact mission brief here..."
+                                />
+                                {errors.description && <span className="text-rose-500 text-xs mt-2 block">{errors.description.message}</span>}
+                            </div>
+                        </div>
+
+                    </form>
+                </div>
+
+                {/* RIGHT COLUMN - LIVE PREVIEW */}
+                <div className="lg:col-span-6 h-full flex flex-col items-center sticky top-28" ref={previewContainerRef}>
+                    <div className="w-full flex items-center justify-between mb-4 px-2">
+                        <span className="text-[10px] uppercase tracking-widest font-black opacity-40 flex items-center gap-2"><Eye className="w-4 h-4" /> Live Output Canvas</span>
                     </div>
-                </motion.div>
+
+                    <div className="w-full max-w-[600px] bg-white text-black shadow-2xl transition-all duration-300 origin-top overflow-hidden relative rounded-xl"
+                        style={{
+                            height: '800px',
+                            transform: `scale(${previewScale})`,
+                        }}
+                    >
+                        {/* A4 Content Area with neat scrollbar */}
+                        <div className="h-full overflow-y-auto custom-scrollbar-light p-10 relative z-10 selection:bg-[var(--primary)] selection:text-white">
+
+                            {/* Candidate View Header */}
+                            <div className="border-b-4 border-black pb-8 mb-8">
+                                <div className="flex justify-between items-start mb-6">
+                                    <div className="text-[10px] font-black uppercase tracking-widest text-[#4F46E5] bg-[#4F46E5]/10 px-3 py-1 rounded-full">
+                                        Mission Protocol
+                                    </div>
+                                    <div className="font-mono text-xs font-bold text-gray-400">
+                                        {new Date().toISOString().split('T')[0]} // AC-11
+                                    </div>
+                                </div>
+                                <h1 className="text-4xl font-black tracking-tight mb-4 uppercase font-sans text-gray-900 leading-none">
+                                    {formValues.jobTitle || "UNTITLED ROLE"}
+                                </h1>
+                                <div className="flex items-center gap-6 text-sm font-bold text-gray-500">
+                                    <span className="flex items-center gap-2"><Building2 className="w-4 h-4" /> {formValues.companyName || "COMPANY_ID"}</span>
+                                    <span className="flex items-center gap-2"><MapPin className="w-4 h-4" /> {formValues.isRemote ? "Remote Operations" : formValues.location || "LOCATION_ID"}</span>
+                                </div>
+                            </div>
+
+                            {/* Data Grid */}
+                            <div className="grid grid-cols-2 gap-x-12 gap-y-8 mb-10 p-6 bg-gray-50 rounded-2xl border border-gray-100">
+                                <div>
+                                    <span className="flex items-center gap-2 text-[9px] uppercase font-black text-gray-400 mb-2 tracking-widest"><Calendar className="w-3 h-3" /> Experience Index</span>
+                                    <span className="font-bold text-lg text-gray-800">{formValues.yearsExperience}+ Cycles Expected</span>
+                                </div>
+                                <div>
+                                    <span className="flex items-center gap-2 text-[9px] uppercase font-black text-gray-400 mb-2 tracking-widest"><DollarSign className="w-3 h-3" /> Compensation Ledger</span>
+                                    <span className="font-bold text-lg text-gray-800">
+                                        {formValues.salaryMin > 0 ? `${formValues.currency} ${formValues.salaryMin.toLocaleString()} - ${formValues.salaryMax.toLocaleString()}` : 'Negotiable Yield'}
+                                    </span>
+                                </div>
+                                <div>
+                                    <span className="flex items-center gap-2 text-[9px] uppercase font-black text-gray-400 mb-2 tracking-widest"><Briefcase className="w-3 h-3" /> Division / Model</span>
+                                    <span className="font-bold text-lg text-gray-800">{formValues.department || "Operations"} • {formValues.employmentType}</span>
+                                </div>
+                                <div>
+                                    <span className="flex items-center gap-2 text-[9px] uppercase font-black text-gray-400 mb-2 tracking-widest"><GraduationCap className="w-3 h-3" /> Academic Threshold</span>
+                                    <span className="font-bold text-lg text-gray-800">{formValues.educationLevel}</span>
+                                </div>
+                            </div>
+
+                            {/* Required Arsenal */}
+                            {formValues.requiredSkills.length > 0 ? (
+                                <div className="mb-10">
+                                    <span className="block text-[10px] uppercase font-black text-[#4F46E5] mb-4 tracking-widest border-l-2 border-[#4F46E5] pl-3">Mandatory Capabilities</span>
+                                    <div className="flex flex-wrap gap-2">
+                                        {formValues.requiredSkills.map(skill => (
+                                            <span key={skill} className="px-4 py-2 bg-black text-white rounded-lg text-xs font-bold shadow-md">
+                                                {skill}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="mb-10 opacity-20 border border-dashed border-gray-400 rounded-xl p-4 text-center">
+                                    <span className="block text-[10px] uppercase font-black text-gray-800 tracking-widest">No capabilities specified</span>
+                                </div>
+                            )}
+
+                            {/* Briefing Contents */}
+                            <div className="mb-12">
+                                <span className="block text-[10px] uppercase font-black text-[#4F46E5] mb-6 tracking-widest border-l-2 border-[#4F46E5] pl-3">Mission Briefing Synopsis</span>
+                                <div className="prose prose-sm prose-black max-w-none text-gray-700 font-serif leading-loose prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg prose-h2:font-agale prose-h3:font-agale prose-a:text-[#4F46E5]">
+                                    {formValues.description ? (
+                                        <ReactMarkdown>{formValues.description}</ReactMarkdown>
+                                    ) : (
+                                        <div className="space-y-4 opacity-10 select-none font-sans">
+                                            <div className="h-3 bg-black rounded w-full"></div>
+                                            <div className="h-3 bg-black rounded w-[90%]"></div>
+                                            <div className="h-3 bg-black rounded w-[95%]"></div>
+                                            <div className="h-3 bg-black rounded w-3/4"></div>
+                                            <div className="h-3 bg-black rounded w-[85%] mt-8"></div>
+                                            <div className="h-3 bg-black rounded w-[60%]"></div>
+                                            <div className="h-3 bg-black rounded w-[75%]"></div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Subtle watermarks for paper feel */}
+                        <div className="absolute -top-10 -right-10 w-40 h-40 border-[10px] border-gray-50 rounded-full opacity-50 pointer-events-none"></div>
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-gray-100 to-transparent pointer-events-none mix-blend-multiply"></div>
+                    </div>
+                </div>
+
             </div>
         </div>
     );

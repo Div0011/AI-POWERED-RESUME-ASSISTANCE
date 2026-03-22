@@ -7,7 +7,7 @@ import schemas, auth
 from services.matching import rank_candidate
 from services.embedding import EmbeddingService
 from services.resume_builder import ResumeBuilder
-from services.analyzer import RequirementAnalyzer
+
 from parser import parse_resume
 import datetime
 import os
@@ -42,52 +42,91 @@ async def parse_resume_content(file: UploadFile = File(...)):
 def simulate_ats(req: schemas.SimulationRequest, db: Session = Depends(get_db)):
     """
     Simulates an ATS check for a candidate without saving them to the recruiter pipeline.
+    Performs deep resume analysis against job requirements.
     """
-    job = db.query(models.Job).filter(models.Job.id == req.job_id).first()
-    if not job:
-        raise HTTPException(status_code=404, detail="Job not found")
+    try:
+        # Validate resume content
+        if not req.resume_text or len(req.resume_text.strip()) < 10:
+            logger.warning(f"ATS Simulation: Resume too short (job_id={req.job_id})")
+            raise HTTPException(status_code=400, detail="Resume must contain meaningful content")
 
-    embedding_service = EmbeddingService()
-    resume_vec = embedding_service.get_embedding(req.resume_text)
+        # Get job details
+        job = db.query(models.Job).filter(models.Job.id == req.job_id).first()
+        if not job:
+            logger.warning(f"ATS Simulation: Job not found (job_id={req.job_id})")
+            raise HTTPException(status_code=404, detail="Job not found")
 
-    # Run the brain
-    result = rank_candidate(
-        jd_text=job.description,
-        resume_text=req.resume_text,
-        jd_embedding=job.embedding,
-        resume_embedding=resume_vec,
-        must_have_skills=job.required_skills or []
-    )
+        logger.info(f"[ATS] Starting simulation for job_id={req.job_id}, resume_len={len(req.resume_text)}")
 
-    # Create student-friendly reasoning (less critical, more coaching-focused)
-    student_prompt = f"Rewrite this recruiter-focused reasoning into a positive, helpful coaching feedback for a student: {result['reasoning']}"
-    # For now, we'll just use a slightly modified version or call Gemini if needed.
-    # To keep it fast, we'll prefix it.
-    coaching_feedback = f"Here is how you can improve: {result['reasoning']}"
+        # Generate embeddings for resume (skip for very short resumes)
+        resume_vec = None
+        if len(req.resume_text) > 50:
+            try:
+                embedding_service = EmbeddingService()
+                resume_vec = embedding_service.get_embedding(req.resume_text)
+                logger.info(f"[ATS] Embedding generated: {len(resume_vec) if resume_vec else 0} dimensions")
+            except Exception as emb_err:
+                logger.warning(f"[ATS] Embedding failed (continuing without): {str(emb_err)[:80]}")
+                resume_vec = None
+        else:
+            logger.info(f"[ATS] Skipping embedding for short resume ({len(req.resume_text)} chars)")
 
-    # Save to simulations table
-    sim = models.Simulation(
-        resume_text=req.resume_text,
-        job_id=req.job_id,
-        score=result["final_score"],
-        analysis={
-            "missing_skills": result["missing_skills"],
-            "matched_skills": result["matched_skills"],
-            "breakdown": result["breakdown"]
-        },
-        student_reasoning=coaching_feedback,
-        created_at=str(datetime.datetime.now())
-    )
+        # Run the hybrid analysis (constraint + vector similarity)
+        result = rank_candidate(
+            jd_text=job.description,
+            resume_text=req.resume_text,
+            jd_embedding=job.embedding or [],
+            resume_embedding=resume_vec or [],
+            must_have_skills=job.required_skills or []
+        )
 
-    db.add(sim)
-    db.commit()
+        logger.info(f"[ATS] Analysis complete: score={result['final_score']:.2f}, matched={len(result['matched_skills'])}, missing={len(result['missing_skills'])}")
 
-    return schemas.SimulationResponse(
-        score=result["final_score"],
-        missing_skills=result["missing_skills"],
-        matched_skills=result["matched_skills"],
-        student_reasoning=coaching_feedback
-    )
+        # Convert score to 0-1 range if needed
+        score = result["final_score"]
+        if score > 1:
+            score = score / 100.0
+
+        # Create coaching-friendly feedback
+        coaching_feedback = result.get('reasoning', 'Analysis complete')
+
+        # Save to simulations table for record-keeping
+        try:
+            sim = models.Simulation(
+                resume_text=req.resume_text,
+                job_id=req.job_id,
+                score=score,
+                analysis={
+                    "missing_skills": result["missing_skills"],
+                    "matched_skills": result["matched_skills"],
+                    "breakdown": result["breakdown"],
+                    "status": result["status"]
+                },
+                student_reasoning=coaching_feedback,
+                created_at=str(datetime.datetime.now())
+            )
+            db.add(sim)
+            db.commit()
+            logger.info(f"[ATS] Simulation record saved")
+        except Exception as db_err:
+            logger.warning(f"[ATS] Failed to save simulation record: {db_err}")
+            db.rollback()
+            # Don't fail the response if recording fails
+
+        return schemas.SimulationResponse(
+            score=score,
+            missing_skills=result["missing_skills"],
+            matched_skills=result["matched_skills"],
+            student_reasoning=coaching_feedback
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[ATS] Critical error during simulation: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+        raise HTTPException(status_code=500, detail="Resume analysis failed. Please try again.")
 
 @router.post("/improve-bullet", response_model=schemas.BulletImproveResponse)
 def improve_bullet(req: schemas.BulletImproveRequest, db: Session = Depends(get_db)):
@@ -111,6 +150,69 @@ def improve_bullet(req: schemas.BulletImproveRequest, db: Session = Depends(get_
         import traceback
         logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/improve-resume", response_model=schemas.ResumeImproveResponse)
+def improve_resume(req: schemas.ResumeImproveRequest, db: Session = Depends(get_db)):
+    """
+    AI-powered full resume rewrite and data extraction.
+    """
+    try:
+        builder = ResumeBuilder()
+        result = builder.improve_full_resume(req.resume_text)
+        
+        return schemas.ResumeImproveResponse(
+            improved_resume=result.get("improved_resume", ""),
+            extracted_data=result.get("extracted_data", {})
+        )
+    except Exception as e:
+        logger.error(f"Error in improve_resume endpoint: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/talent-pool/opt-in")
+def opt_in_talent_pool(req: schemas.CandidateOptInRequest, db: Session = Depends(get_db)):
+    """
+    Opts the candidate into the global talent pool by creating a Candidate record with no specific job.
+    """
+    try:
+        candidate = db.query(models.Candidate).filter(models.Candidate.email == req.candidate_email).first()
+        resume_vec = None
+        try:
+            embedding_service = EmbeddingService()
+            resume_vec = embedding_service.get_embedding(req.resume_text)
+        except Exception as e:
+            logger.error(f"Opt-in embedding failed: {e}")
+
+        # Use provided name or default to email prefix
+        cand_name = req.name if req.name else req.candidate_email.split('@')[0].capitalize()
+
+        if not candidate:
+            candidate = models.Candidate(
+                name=cand_name,
+                email=req.candidate_email,
+                resume_text=req.resume_text,
+                skills=req.skills,
+                job_id=None,
+                score=0.0,
+                explanation="Opted into Global Talent Pool",
+                embedding=resume_vec
+            )
+            db.add(candidate)
+        else:
+            candidate.name = cand_name
+            candidate.resume_text = req.resume_text
+            candidate.skills = req.skills if req.skills is not None else candidate.skills
+            candidate.embedding = resume_vec
+            candidate.explanation = "Opted into Global Talent Pool"
+            
+        db.commit()
+        return {"status": "success", "message": "Successfully opted into Talent Pool"}
+    except Exception as e:
+        logger.error(f"Failed talent pool opt-in: {e}")
+        raise HTTPException(status_code=500, detail="Failed to save to talent pool")
+
 @router.post("/apply", response_model=schemas.ApplicationResponse)
 def apply_to_mission(req: schemas.ApplicationCreate, db: Session = Depends(get_db)):
     """
@@ -198,32 +300,68 @@ def apply_to_mission(req: schemas.ApplicationCreate, db: Session = Depends(get_d
 @router.post("/board")
 def get_mission_board(req: schemas.SimulationRequest, db: Session = Depends(get_db)):
     """
-    Returns all jobs with match analysis specialized for the Mission Board.
+    Returns all jobs with FAST lightweight scoring for Mission Board.
+    Uses vector similarity only (no AI analysis) for speed.
+    Deep analysis happens only when user clicks "/simulate" endpoint.
     """
+    import numpy as np
+    
     jobs = db.query(models.Job).all()
     board = []
     
-    embedding_service = EmbeddingService()
-    resume_vec = embedding_service.get_embedding(req.resume_text)
+    try:
+        embedding_service = EmbeddingService()
+        resume_vec = embedding_service.get_embedding(req.resume_text)
+    except Exception as e:
+        logger.warning(f"[BOARD] Failed to generate resume embedding: {e}. Using keyword matching only.")
+        resume_vec = None
     
     for job in jobs:
-        # Run the brain
-        result = rank_candidate(
-            jd_text=job.description,
-            resume_text=req.resume_text,
-            jd_embedding=job.embedding,
-            resume_embedding=resume_vec,
-            must_have_skills=job.required_skills or []
-        )
+        # FAST SCORING: Vector similarity only (no AI calls)
+        match_score = 0.0
+        
+        if resume_vec and job.embedding:
+            try:
+                jd_vec = np.array(job.embedding)
+                res_vec = np.array(resume_vec)
+                
+                if np.linalg.norm(jd_vec) == 0 or np.linalg.norm(res_vec) == 0:
+                    match_score = 0.0
+                else:
+                    # Cosine similarity (raw, no AI analysis)
+                    match_score = float(np.dot(jd_vec, res_vec) / (np.linalg.norm(jd_vec) * np.linalg.norm(res_vec)))
+            except Exception as e:
+                logger.warning(f"[BOARD] Vector similarity calculation failed: {e}")
+                match_score = 0.0
+        
+        # Simple keyword matching if no vectors available
+        if match_score == 0 and job.required_skills:
+            resume_lower = req.resume_text.lower()
+            matched = sum(1 for skill in job.required_skills if skill.lower() in resume_lower)
+            match_score = min(matched / len(job.required_skills), 1.0) if job.required_skills else 0.0
         
         board.append({
             "job_id": job.id,
             "title": job.title,
             "description": job.description,
-            "match_score": result["final_score"],
-            "missing_skills": result["missing_skills"],
-            "matched_skills": result["matched_skills"],
-            "reasoning": result["reasoning"]
+            "company_name": job.company_name or "Tech Corp",
+            "location": job.location or "Remote",
+            "is_remote": job.is_remote,
+            "salary_min": job.salary_min,
+            "salary_max": job.salary_max,
+            "currency": job.currency,
+            "employment_type": job.employment_type,
+            "department": job.department,
+            "required_skills": job.required_skills or [],
+            "preferred_skills": job.preferred_skills or [],
+            "years_experience": job.years_experience,
+            "education_level": job.education_level,
+            "benefits": job.benefits or [],
+            "match_score": match_score,
+            "missing_skills": [],  # Deep analysis happens on /simulate
+            "matched_skills": [],  # Deep analysis happens on /simulate
+            "reasoning": "Quick match preview - click job for detailed AI analysis"
         })
-        
+    
+    logger.info(f"[BOARD] Loaded {len(board)} jobs with fast scoring")
     return board

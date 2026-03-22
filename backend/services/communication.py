@@ -2,7 +2,7 @@ import os
 import base64
 from email.message import EmailMessage
 from typing import Dict, Any, Literal
-import google.generativeai as genai
+from google import genai
 from loguru import logger
 from dotenv import load_dotenv
 from services.gmail import GmailService
@@ -11,10 +11,12 @@ load_dotenv()
 
 class CommunicationService:
     def __init__(self):
-        api_key = os.getenv("GEMINI_API_KEY")
+        api_key = os.getenv("GOOGLE_GENERATIVE_AI_API_KEY")
         if api_key:
-            genai.configure(api_key=api_key)
-        self.model = genai.GenerativeModel('gemini-2.0-flash')
+            self.client = genai.Client(api_key=api_key)
+        else:
+            self.client = None
+        self.model = 'gemini-2.5-flash'
         self.gmail = GmailService()
 
     def draft_decision_email(self, candidate_name: str, job_title: str, reasoning: str, decision: Literal["accept", "reject"]) -> str:
@@ -42,7 +44,13 @@ class CommunicationService:
             Return ONLY the email body text.
             """
             
-            response = self.model.generate_content(prompt)
+            if not self.client:
+                raise RuntimeError("Gemini client not initialized")
+                
+            response = self.client.models.generate_content(
+                model=self.model,
+                contents=prompt
+            )
             return response.text.strip()
         except Exception as e:
             logger.error(f"Error drafting email with Gemini: {e}")

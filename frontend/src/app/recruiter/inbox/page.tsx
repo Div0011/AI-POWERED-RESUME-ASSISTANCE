@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Mail, RefreshCw, CheckCircle, XCircle, Clock, Filter } from 'lucide-react';
+import { Mail, RefreshCw, CheckCircle, XCircle, Clock, Filter, Terminal, Cpu } from 'lucide-react';
 
 // Mock Data for Email Automation
 const MOCK_EMAILS = [
@@ -22,94 +22,102 @@ export default function InboxPage() {
     };
 
     return (
-        <div className="min-h-screen p-4 md:p-8 pt-20 md:pt-28 text-white pb-24 md:pb-8">
-            <div className="max-w-6xl mx-auto">
-                <header className="mb-12 flex flex-col items-center justify-center text-center gap-6 relative">
-                    <div className="max-w-2xl">
-                        <h1 className="text-3xl md:text-5xl font-bold tracking-wide mb-4 drop-shadow-md uppercase" style={{ fontFamily: 'var(--font-agale)' }}>
-                            SMART INBOX
-                        </h1>
-                        <p className="text-white/60 text-sm md:text-base leading-relaxed">
-                            Real-time email monitoring. The AI reads resumes sent to
-                            <span className="text-purple-300 font-mono bg-white/10 px-2 py-0.5 rounded mx-1 break-all">jobs@mowglai.in</span>
-                        </p>
-                    </div>
-                    <button
-                        onClick={refreshInbox}
-                        className="md:absolute md:right-0 bg-white/10 border border-white/20 p-4 rounded-2xl hover:bg-white/20 transition-all active:scale-95 shadow-xl"
-                    >
-                        <RefreshCw className={`w-5 h-5 md:w-6 md:h-6 ${isRefreshing ? 'animate-spin' : ''}`} />
-                    </button>
-                </header>
+        <div className="min-h-screen p-4 sm:p-8 pt-24 sm:pt-32 max-w-7xl mx-auto font-sans">
+            <header className="mb-8 sm:mb-12 flex flex-col items-center sm:items-start justify-center text-center sm:text-left relative">
+                <div className="flex items-center justify-center sm:justify-start gap-2 text-[var(--primary)] text-[10px] sm:text-xs font-black uppercase tracking-[0.3em] mb-3">
+                    <Terminal className="w-4 h-4" />
+                    AUTONOMOUS :: MAIL_PROXY
+                </div>
+                <h1 className="text-4xl sm:text-6xl font-agale font-bold tracking-tighter text-[var(--foreground)] italic mb-4 leading-none">
+                    Smart Inbox
+                </h1>
+                <p className="text-[var(--foreground)]/50 font-mono text-[10px] sm:text-sm max-w-2xl leading-relaxed uppercase tracking-widest">
+                    Real-time ingestion. The AI intercepts applicant emails at
+                    <span className="text-[var(--primary)] bg-[var(--primary)]/10 px-2 py-0.5 rounded mx-1 break-all">jobs@mowglai.in</span>
+                </p>
 
-                {/* Stats Row */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
-                    {[
-                        { label: "Processed Today", value: "42", color: "bg-blue-500/20" },
-                        { label: "Auto-Interviewed", value: "8", color: "bg-emerald-500/20" },
-                        { label: "Auto-Rejected", value: "15", color: "bg-rose-500/20" },
-                        { label: "Needs Review", value: "5", color: "bg-amber-500/20" },
-                    ].map((stat, i) => (
-                        <div key={i} className={`${stat.color} border border-white/10 p-6 rounded-2xl backdrop-blur-sm`}>
-                            <h3 className="text-3xl font-bold mb-1">{stat.value}</h3>
-                            <p className="text-white/60 text-sm uppercase tracking-wider font-semibold">{stat.label}</p>
-                        </div>
-                    ))}
+                <button
+                    onClick={refreshInbox}
+                    className="mt-6 sm:mt-0 sm:absolute sm:right-0 sm:top-4 bg-[var(--obsidian)] border border-[var(--card-border)] p-4 rounded-2xl hover:bg-[var(--foreground)]/5 hover:border-[var(--primary)]/30 transition-all active:scale-95 shadow-xl glass-panel group"
+                >
+                    <RefreshCw className={`w-5 h-5 md:w-6 md:h-6 text-[var(--primary)] ${isRefreshing ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'}`} />
+                </button>
+            </header>
+
+            {/* Stats Row */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-12">
+                {[
+                    { label: "Processed Today", value: "42", color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/20" },
+                    { label: "Auto-Interviewed", value: "8", color: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/20" },
+                    { label: "Auto-Rejected", value: "15", color: "text-rose-400", bg: "bg-rose-500/10", border: "border-rose-500/20" },
+                    { label: "Needs Review", value: "5", color: "text-amber-400", bg: "bg-amber-500/10", border: "border-amber-500/20" },
+                ].map((stat, i) => (
+                    <motion.div
+                        key={i}
+                        initial={{ opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.1 }}
+                        className={`${stat.bg} ${stat.border} border p-6 rounded-[2rem] glass-panel transition-all hover:-translate-y-1 hover:shadow-xl`}
+                    >
+                        <h3 className={`text-3xl sm:text-4xl font-agale italic font-bold mb-2 ${stat.color}`}>{stat.value}</h3>
+                        <p className="text-[var(--foreground)]/50 text-[10px] uppercase font-black tracking-[0.2em]">{stat.label}</p>
+                    </motion.div>
+                ))}
+            </div>
+
+            {/* Email List */}
+            <div className="glass-panel bg-[var(--obsidian-card)]/40 rounded-[2.5rem] border border-[var(--card-border)] overflow-hidden shadow-2xl">
+                <div className="p-6 sm:p-8 border-b border-[var(--card-border)] flex items-center justify-between">
+                    <h2 className="text-xl font-agale font-bold italic flex items-center gap-3">
+                        <Mail className="w-5 h-5 text-[var(--primary)]" />
+                        Intercepted Comm Log
+                    </h2>
+                    <button className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--foreground)]/40 flex items-center gap-2 hover:text-[var(--primary)] transition-colors">
+                        <Filter className="w-4 h-4" /> Filter
+                    </button>
                 </div>
 
-                {/* Email List */}
-                <div className="bg-white/10 backdrop-blur-md rounded-3xl border border-white/20 overflow-hidden shadow-2xl">
-                    <div className="p-6 border-b border-white/10 flex items-center justify-between">
-                        <h2 className="text-xl font-bold flex items-center gap-2">
-                            <Mail className="w-5 h-5 text-purple-300" />
-                            Recent Activities
-                        </h2>
-                        <button className="text-sm text-white/50 flex items-center gap-1 hover:text-white">
-                            <Filter className="w-4 h-4" /> Filter
-                        </button>
-                    </div>
-
-                    <div className="divide-y divide-white/10">
-                        {emails.map((email) => (
-                            <motion.div
-                                key={email.id}
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                className="p-6 hover:bg-white/5 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-4"
-                            >
-                                <div className="flex-1">
-                                    <div className="flex items-center gap-3 mb-1">
-                                        <span className={`w-2 h-2 rounded-full ${email.status === 'processed' ? 'bg-emerald-400' :
-                                            email.status === 'hold' ? 'bg-amber-400' : 'bg-slate-500'
-                                            }`} />
-                                        <h3 className="font-bold text-lg">{email.sender}</h3>
-                                        <span className="text-xs text-white/40 bg-white/10 px-2 py-0.5 rounded">{email.time}</span>
-                                    </div>
-                                    <p className="text-white/70">{email.subject}</p>
+                <div className="divide-y divide-[var(--card-border)]">
+                    {emails.map((email, idx) => (
+                        <motion.div
+                            key={email.id}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: idx * 0.1 }}
+                            className="p-6 sm:p-8 hover:bg-[var(--primary)]/5 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-6 group"
+                        >
+                            <div className="flex-1">
+                                <div className="flex flex-wrap items-center gap-3 mb-2">
+                                    <span className={`w-2 h-2 rounded-full shadow-lg ${email.status === 'processed' ? 'bg-emerald-400 shadow-emerald-500/50' :
+                                        email.status === 'hold' ? 'bg-amber-400 shadow-amber-500/50' : 'bg-slate-500 shadow-slate-500/50'
+                                        }`} />
+                                    <h3 className="font-bold text-lg sm:text-xl tracking-wide group-hover:text-[var(--primary)] transition-colors">{email.sender}</h3>
+                                    <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[var(--foreground)]/40 bg-[var(--foreground)]/5 border border-[var(--card-border)] px-2 py-0.5 rounded-lg">{email.time}</span>
                                 </div>
+                                <p className="text-[var(--foreground)]/60 text-sm">{email.subject}</p>
+                            </div>
 
-                                <div className="flex items-center gap-8">
-                                    {email.score > 0 && (
-                                        <div className="text-center">
-                                            <div className="text-xs text-white/40 uppercase font-bold mb-1">AI Score</div>
-                                            <div className={`text-xl font-bold ${email.score > 85 ? 'text-emerald-300' :
-                                                email.score > 50 ? 'text-amber-300' : 'text-rose-300'
-                                                }`}>
-                                                {email.score}%
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    <div className="w-48 text-right">
-                                        <div className="text-xs text-white/40 uppercase font-bold mb-1">Action Taken</div>
-                                        <div className="text-sm font-medium text-purple-200">
-                                            {email.action}
+                            <div className="flex flex-row items-center gap-6 sm:gap-12 w-full md:w-auto mt-4 md:mt-0">
+                                {email.score > 0 && (
+                                    <div className="text-left md:text-center w-1/3 md:w-auto">
+                                        <div className="text-[8px] sm:text-[10px] font-black tracking-[0.2em] uppercase text-[var(--foreground)]/30 mb-1">Alignment</div>
+                                        <div className={`text-xl sm:text-2xl font-agale italic font-bold ${email.score > 85 ? 'text-emerald-400' :
+                                            email.score > 50 ? 'text-amber-400' : 'text-rose-400'
+                                            }`}>
+                                            {email.score}%
                                         </div>
                                     </div>
+                                )}
+
+                                <div className="w-2/3 md:w-56 text-right">
+                                    <div className="text-[8px] sm:text-[10px] font-black tracking-[0.2em] uppercase text-[var(--foreground)]/30 mb-1">AI Action</div>
+                                    <div className="text-xs sm:text-sm font-bold text-[var(--primary)] font-mono uppercase tracking-widest">
+                                        {email.action}
+                                    </div>
                                 </div>
-                            </motion.div>
-                        ))}
-                    </div>
+                            </div>
+                        </motion.div>
+                    ))}
                 </div>
             </div>
         </div>

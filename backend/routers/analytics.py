@@ -9,18 +9,24 @@ from loguru import logger
 router = APIRouter(dependencies=[Depends(auth.RoleChecker("recruiter"))])
 
 @router.get("/summary", response_model=schemas.AnalyticsSummaryResponse)
-def get_analytics_summary(db: Session = Depends(get_db)):
+def get_analytics_summary(job_id: int = None, db: Session = Depends(get_db)):
     """
     Analyzes recruitment data to provide skill gap insights and score distributions.
+    Optional filtering by job_id.
     """
     try:
-        candidates = db.query(models.Candidate).all()
+        query = db.query(models.Candidate)
+        if job_id:
+            query = query.filter(models.Candidate.job_id == job_id)
+        candidates = query.all()
         
         if not candidates:
+            logger.info(f"No candidates found for job_id={job_id}")
             return schemas.AnalyticsSummaryResponse(
                 total_resumes=0,
                 avg_score=0.0,
                 top_missing_skill="None",
+                interview_ready_count=0,
                 skill_gaps=[],
                 score_distribution=[]
             )
@@ -31,19 +37,38 @@ def get_analytics_summary(db: Session = Depends(get_db)):
         scores = []
 
         for cand in candidates:
-            total_score += cand.score or 0.0
-            scores.append(cand.score or 0.0
-            )
-            
-            # Aggregate missing skills from analysis JSON
-            if cand.analysis:
-                analysis_data = cand.analysis
-                if isinstance(analysis_data, str):
-                    analysis_data = json.loads(analysis_data)
+            try:
+                total_score += cand.score or 0.0
+                scores.append(cand.score or 0.0)
                 
-                missing = analysis_data.get("missing_skills", [])
-                for skill in missing:
-                    missing_skills_counter[skill] += 1
+                # Aggregate missing skills from analysis JSON
+                if cand.analysis:
+                    try:
+                        analysis_data = cand.analysis
+                        if isinstance(analysis_data, str):
+                            analysis_data = json.loads(analysis_data)
+                        
+                        missing = analysis_data.get("missing_skills", [])
+                        if missing and isinstance(missing, list):
+                            for skill in missing:
+                                if skill:
+                                    missing_skills_counter[str(skill)] += 1
+                    except (json.JSONDecodeError, AttributeError, TypeError) as parse_err:
+                        logger.warning(f"Failed to parse analysis for candidate {cand.id}: {parse_err}")
+                        continue
+            except Exception as e:
+                logger.warning(f"Error processing candidate {cand.id}: {e}")
+                continue
+
+        if total_resumes == 0:
+            return schemas.AnalyticsSummaryResponse(
+                total_resumes=0,
+                avg_score=0.0,
+                top_missing_skill="None",
+                interview_ready_count=0,
+                skill_gaps=[],
+                score_distribution=[]
+            )
 
         avg_score = total_score / total_resumes
         
@@ -75,7 +100,14 @@ def get_analytics_summary(db: Session = Depends(get_db)):
         ]
 
         # Interview Ready Metric (from Simulation table)
-        interview_ready_count = db.query(models.Simulation).filter(models.Simulation.score > 0.7).count()
+        try:
+            sim_query = db.query(models.Simulation).filter(models.Simulation.score > 0.7)
+            if job_id:
+                sim_query = sim_query.filter(models.Simulation.job_id == job_id)
+            interview_ready_count = sim_query.count()
+        except Exception as sim_err:
+            logger.warning(f"Failed to query simulations: {sim_err}")
+            interview_ready_count = 0
 
         return schemas.AnalyticsSummaryResponse(
             total_resumes=total_resumes,

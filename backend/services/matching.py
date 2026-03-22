@@ -2,7 +2,7 @@ from typing import List, Dict, Any, Optional
 import numpy as np
 from loguru import logger
 from services.embedding import EmbeddingService
-from services.analyzer import RequirementAnalyzer
+from services.analyzer import ResumeAnalyzer
 
 def rank_candidate(
     jd_text: str, 
@@ -29,7 +29,7 @@ def rank_candidate(
             vector_sim = np.dot(jd_vec, res_vec) / (np.linalg.norm(jd_vec) * np.linalg.norm(res_vec))
         
         # 2. Smart Constraint Check via Gemini
-        analyzer = RequirementAnalyzer()
+        analyzer = ResumeAnalyzer()
         eval_result = analyzer.analyze_resume_v_jd(resume_text, must_have_skills)
         
         # Calculate constraint score based on matches

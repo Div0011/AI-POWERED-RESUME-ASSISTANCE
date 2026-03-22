@@ -1,31 +1,134 @@
+# ============================================================
+# GET IT! - AI Powered Resume Assistance
+# .gitignore
+# ============================================================
+
+# ── Environment & Secrets ───────────────────────────────────
+.env
+.env.*
+*.env
+!.env.example
+
+# ── Python / Backend ────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# ── Node.js / Frontend ──────────────────────────────────────
 node_modules/
+.npm
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Next.js specific
 .next/
 out/
 build/
 dist/
-venv/
-.venv/
-__pycache__/
-*.pyc
-.env
-.env.local
-.DS_Store
-backend/uploads/
-backend/resume.db
-backend/token.pickle
-backend/token.json
-backend/*.json.json
-token.pickle
-token.json
-service-account.json
-*.json.json
-.vscode/
-temp_processing/
-!credentials.json.example
 
-# Database & Logs
-*.db
-backend/server_log_cmd.txt
-builder_diag.txt
-crash_log.txt
+# ── Logs & Temporary Files ──────────────────────────────────
+*.log
+*.txt
+logs/
+*.local
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# ── OS Files ────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ── IDE & Editor ────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+
+# ── Testing & Coverage ──────────────────────────────────────
+coverage/
+.nyc_output
+.coverage
+htmlcov/
+.tox/
+.pytest_cache/
+nosetests.xml
+coverage.xml
+*.cover
+
+# ── Docker ──────────────────────────────────────────────────
+docker-compose.override.yml
+
+# ── Project-Specific ────────────────────────────────────────
+# Diagnostic/scratch files
+*.zip
+agale-font-*.zip
+GMAIL_REAUTH_URL.txt
 auth_url.txt
+raw_out.txt
+test_out.txt
+crash_log.txt
+server_log.txt
+models_list.txt
+builder_diag.txt
+
+# Seed scripts (keep them local only)
+backend/seed_jobs.py
+backend/seed_users.py
+
+# Log/debug text files from backend
+backend/raw_out.txt
+backend/test_out.txt
+backend/server_log.txt
+backend/models_list.txt
+
+# Personal / internal docs not for public repo
+Personal_use/
+DEPLOY_MISSION_FIX.md
+GMAIL_REAUTH_URL.txt
+INTERNAL_EXPLANATION.md
+PERFORMANCE_FIXES.md
+QUICK_ACTION_PLAN.md
+REFINED_JOB_FLOW_PLAN.md
+SDK_MIGRATION_FIX.md
+SYSTEM_STATUS.txt
+UX_UPGRADE_COMPLETE.md
+COMPLETE_SYSTEM_OVERVIEW.md
+progress.md
+crash_logger.py
+
+# ── Orchids sync (internal tool) ────────────────────────────
+.orchids/

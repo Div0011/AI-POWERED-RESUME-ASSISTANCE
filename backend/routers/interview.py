@@ -43,7 +43,7 @@ def respond_interview(req: schemas.InterviewRespondRequest, db: Session = Depend
         logger.error(f"Failed to process interview step: {e}")
         raise HTTPException(status_code=500, detail="Failed to continue interview")
 
-@router.post("/feedback")
+@router.post("/feedback", response_model=schemas.InterviewFeedbackResponse)
 def get_interview_feedback(req: schemas.InterviewFeedbackRequest, db: Session = Depends(get_db)):
     """
     Generates final feedback after the interview ends.
@@ -54,7 +54,7 @@ def get_interview_feedback(req: schemas.InterviewFeedbackRequest, db: Session = 
     
     try:
         feedback = interviewer_service.generate_final_feedback(job.description, req.history)
-        return {"feedback": feedback}
+        return schemas.InterviewFeedbackResponse(feedback=feedback)
     except Exception as e:
         logger.error(f"Failed to generate feedback: {e}")
         raise HTTPException(status_code=500, detail="Failed to generate feedback report")

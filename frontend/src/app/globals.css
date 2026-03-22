@@ -1,225 +1,101 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&family=Inter:wght@400..900&family=Manrope:wght@500;800&display=swap');
 @import "tailwindcss";
 
 :root {
-  /* "Obsidian AI" Palette - Phase 2 Reset */
-  --obsidian: #050505;
-  /* Deep Black */
-  --obsidian-card: #111111;
-  /* Surface */
-  --white: #EDEDED;
-  /* High Contrast Text */
+  /* NEURAL COMMAND PALETTE - Deep Obsidian + Electric Glow */
+  --navy: #0e0e0f;          /* Surface Base */
+  --navy2: #131314;         /* Surface Low */
+  --navy3: #1a191b;         /* Surface Container */
+  --surface-high: #201f21;
+  --surface-highest: #262627;
+  
+  --cyan: #99f7ff;          /* Primary Neural (Teal) */
+  --cyan-bright: #00f1fe;
+  --purple: #d674ff;        /* Secondary Neural (Purple) */
+  --purple-bright: #bb00fd;
+  
+  --border: rgba(255, 255, 255, 0.04);
+  --border-active: rgba(0, 241, 254, 0.2);
+  --glass: rgba(14, 14, 15, 0.7);
+  --glass-bright: rgba(38, 38, 39, 0.8);
+  
+  --text: #ffffff;
+  --muted: #adaaab;         /* Slate-ish Muted */
+  --dim: #767576;           /* Technical Readout Dim */
+  
+  --primary-gradient: linear-gradient(135deg, var(--cyan) 0%, var(--purple) 100%);
+  --glow-cyan: 0 0 20px rgba(0, 241, 254, 0.3);
+  --glow-purple: 0 0 20px rgba(187, 0, 253, 0.3);
 
-  /* Accents */
-  --cyan-electric: #00E8FF;
-  --indigo-deep: #4F46E5;
-
-  /* Default (Dark) */
-  --background: var(--obsidian);
-  --foreground: var(--white);
-  --primary: var(--cyan-electric);
-  --card-bg: var(--obsidian-card);
-  --card-border: rgba(255, 255, 255, 0.08);
-
-  --grid-opacity: 0.03;
+  /* Default (Neural Dark) */
+  --background: var(--navy);
+  --foreground: var(--text);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-primary: var(--primary);
-  --color-card: var(--card-bg);
-  --color-border: var(--card-border);
-
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-agale: var(--font-agale);
+  --font-sans: 'Inter', sans-serif;
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-mono: 'Manrope', monospace;
 }
 
 body {
   background-color: var(--background);
-  /* "Graph Paper" Texture via CSS Gradients (Box Type) */
-  background-image:
-    linear-gradient(to right, rgba(128, 128, 128, var(--grid-opacity)) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(128, 128, 128, var(--grid-opacity)) 1px, transparent 1px);
-  background-size: 40px 40px;
-  background-attachment: fixed;
   color: var(--foreground);
-  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
-  min-height: 100vh;
-  margin: 0;
+  font-family: var(--font-sans);
   overflow-x: hidden;
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-[data-theme='light'] body {
-  /* "Obsidian AI" Light Mode */
-  --background: #FFFFFF;
-  --foreground: #1D1D1F;
-  /* High Contrast Gray */
-  --primary: var(--indigo-deep);
-  --card-bg: #F5F5F7;
-  --card-border: rgba(0, 0, 0, 0.06);
-
-  --grid-opacity: 0.08;
-  /* Visible box grid on light mode */
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
 }
 
 /* Typography Consistency */
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-family: var(--font-agale), sans-serif;
-  letter-spacing: 0.01em;
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
 }
 
-button {
-  font-family: var(--font-sans);
-  font-weight: 500;
-  letter-spacing: 0.01em;
-}
+/* Neural Utilities */
+.neural-glow-cyan { text-shadow: var(--glow-cyan); }
+.neural-glow-purple { text-shadow: var(--glow-purple); }
 
-/* 1. "Glass-Slab" Component Style */
-.glass-slab {
-  background: rgba(28, 28, 33, 0.6);
-  /* Semi-transparent #1C1C21 */
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-right: 1px solid var(--card-border);
+.glass-card {
+  background: var(--glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  border-radius: 12px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-[data-theme='light'] .glass-slab {
-  background: rgba(255, 255, 255, 0.7);
-  border-right: 1px solid var(--card-border);
+.glass-card:hover {
+  background: var(--glass-bright);
+  border-color: var(--border-active);
+  box-shadow: 0 0 30px rgba(0, 241, 254, 0.05);
 }
 
-/* 2. Glass Cards (Updated) */
-.glass-panel {
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  backdrop-filter: blur(8px);
-  /* Optional for cards on top of complex bg */
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--navy);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--navy3);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--dim);
 }
 
-.glass-panel:hover {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 1px var(--primary), 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+/* Animations */
+@keyframes pulse-neural {
+  0% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
+  100% { opacity: 0.3; transform: scale(1); }
 }
 
-/* 3. Liquid Progress Bar */
-@keyframes liquid-flow {
-  0% {
-    transform: translateX(-100%);
-  }
-
-  50% {
-    transform: translateX(20%);
-  }
-
-  100% {
-    transform: translateX(100%);
-  }
-}
-
-.liquid-progress {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: rgba(255, 255, 255, 0.1);
-  overflow: hidden;
-  z-index: 9999;
-}
-
-.liquid-progress::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  right: 0;
-  background: linear-gradient(90deg, transparent, var(--primary), transparent);
-  animation: liquid-flow 1.5s infinite cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* 4. Skeleton Loader (Glass-Style) */
-.skeleton-loader {
-  background: linear-gradient(90deg,
-      var(--card-border) 25%,
-      rgba(255, 255, 255, 0.08) 50%,
-      var(--card-border) 75%);
-  background-size: 200% 100%;
-  animation: skeleton-shimmer 1.5s infinite;
-  border-radius: 0.5rem;
-}
-
-[data-theme='light'] .skeleton-loader {
-  background: linear-gradient(90deg,
-      rgba(0, 0, 0, 0.05) 25%,
-      rgba(0, 0, 0, 0.02) 50%,
-      rgba(0, 0, 0, 0.05) 75%);
-}
-
-@keyframes skeleton-shimmer {
-  0% {
-    background-position: 200% 0;
-  }
-
-  100% {
-    background-position: -200% 0;
-  }
-}
-
-/* 5. Markdown Preview Styling */
-.preview-markdown h1 {
-  font-size: 1.875rem;
-  font-weight: 700;
-  margin-bottom: 1rem;
-  color: var(--foreground);
-}
-
-.preview-markdown h2 {
-  font-size: 1.25rem;
-  font-weight: 700;
-  margin-top: 1.5rem;
-  margin-bottom: 0.75rem;
-  color: var(--primary);
-}
-
-.preview-markdown h3 {
-  font-size: 1.125rem;
-  font-weight: 700;
-  margin-top: 1rem;
-  margin-bottom: 0.5rem;
-  color: var(--foreground);
-}
-
-.preview-markdown p {
-  font-size: 0.875rem;
-  margin-bottom: 1rem;
-  line-height: 1.625;
-  opacity: 0.8;
-}
-
-.preview-markdown ul {
-  list-style-type: disc;
-  padding-left: 1.25rem;
-  margin-bottom: 1rem;
-  opacity: 0.8;
-  font-size: 0.875rem;
-}
-
-.preview-markdown li {
-  margin-bottom: 0.25rem;
-}
-
-.preview-markdown strong {
-  color: var(--primary);
-  font-weight: 700;
+.animate-neural-pulse {
+  animation: pulse-neural 4s infinite ease-in-out;
 }

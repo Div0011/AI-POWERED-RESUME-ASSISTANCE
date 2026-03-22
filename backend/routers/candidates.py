@@ -126,39 +126,25 @@ def vector_search_candidates(req: schemas.VectorSearchRequest, db: Session = Dep
                 dot_product = np.dot(query_vec, cand_vec)
                 norm_q = np.linalg.norm(query_vec)
                 norm_c = np.linalg.norm(cand_vec)
-                similarity = float(dot_product / (norm_q * norm_c))
-            except Exception as e:
-                logger.error(f"Error calculating similarity for candidate {cand.id}: {e}")
-                continue
-
-            if similarity > 0.35: # Low threshold for search relevance
-                # Flag as cross-job match if the job title doesn't contain the search query keywords
-                is_cross = False
-                if job_title and req.query.lower() not in job_title.lower():
-                    # If similarity is high but job title doesn't match, it's a cross-match
-                    if similarity > 0.6:
-                        is_cross = True
-
+                
+                similarity = dot_product / (norm_q * norm_c) if (norm_q * norm_c) > 0 else 0
+                
                 results.append({
-                    "id": cand.id,
-                    "name": cand.name,
-                    "email": cand.email,
-                    "score": cand.score,
-                    "confidence_score": cand.confidence_score,
-                    "explanation": cand.explanation,
-                    "analysis": cand.analysis,
-                    "job_id": cand.job_id,
-                    "job_title": job_title or "No Job Assigned",
-                    "is_cross_match": is_cross,
-                    "similarity": similarity
+                    "candidate_id": cand.id,
+                    "job_title": job_title,
+                    "similarity_score": float(similarity),
+                    "resume_text": cand.resume_text[:100]
                 })
+            except Exception as e:
+                logger.warning(f"Error processing candidate {cand.id}: {e}")
+                continue
         
-        # Sort by similarity
-        results.sort(key=lambda x: x["similarity"], reverse=True)
+        # Sort by similarity descending
+        results.sort(key=lambda x: x["similarity_score"], reverse=True)
         return results[:req.top_k]
-
+        
     except Exception as e:
-        logger.error(f"Global vector search failed: {e}")
-        import traceback
-        logger.error(traceback.format_exc())
+        logger.error(f"Vector search error: {e}")
         raise HTTPException(status_code=500, detail="Search failed")
+
+

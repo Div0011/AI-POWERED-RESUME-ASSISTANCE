@@ -20,6 +20,10 @@ class User(Base):
     email = Column(String, unique=True, index=True)
     hashed_password = Column(String)
     role = Column(String, default="viewer") # 'recruiter' or 'viewer'
+    name = Column(String, nullable=True) # Display name
+    email_notifications = Column(Boolean, default=True)
+    message_notifications = Column(Boolean, default=True)
+    marketing_emails = Column(Boolean, default=False)
 
     jobs = relationship("Job", back_populates="owner")
 

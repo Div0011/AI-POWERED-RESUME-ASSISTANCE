@@ -2,9 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Users, Sparkles, Target, TrendingUp, Terminal } from 'lucide-react';
+import { Search, Users, Sparkles, Target, TrendingUp, Terminal, Download, FileText, Phone, Mail } from 'lucide-react';
 import axios from 'axios';
 import { API_BASE } from '@/config';
+import ReasoningModal from '@/components/dashboard/ReasoningModal';
+import { jsPDF } from 'jspdf';
 
 interface VectorSearchResult {
     id: number;
@@ -17,6 +19,9 @@ interface VectorSearchResult {
     job_title: string;
     is_cross_match: boolean;
     similarity: number;
+    skills?: string[];
+    resume_text?: string;
+    expected_salary?: string;
 }
 
 export default function TalentPoolPage() {
@@ -24,6 +29,8 @@ export default function TalentPoolPage() {
     const [results, setResults] = useState<VectorSearchResult[]>([]);
     const [isSearching, setIsSearching] = useState(false);
     const [topK, setTopK] = useState(10);
+    const [selectedCand, setSelectedCand] = useState<any>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     const handleSearch = async () => {
         if (!searchQuery.trim()) return;
@@ -40,6 +47,32 @@ export default function TalentPoolPage() {
         } finally {
             setIsSearching(false);
         }
+    };
+
+    const handleDownloadResume = (e: React.MouseEvent, candidate: VectorSearchResult) => {
+        e.stopPropagation();
+        if (!candidate.resume_text) return;
+
+        const doc = new jsPDF({
+            orientation: 'portrait',
+            unit: 'pt',
+            format: 'a4'
+        });
+        doc.setFont("helvetica");
+
+        const textLines = doc.splitTextToSize(candidate.resume_text.replace(/[*_#]/g, ''), 500);
+        let y = 40;
+
+        for (let i = 0; i < textLines.length; i++) {
+            if (y > 800) {
+                doc.addPage();
+                y = 40;
+            }
+            doc.text(textLines[i], 40, y);
+            y += 15;
+        }
+
+        doc.save(`${candidate.name.replace(/\s+/g, '_')}_Resume.pdf`);
     };
 
     return (
@@ -59,7 +92,7 @@ export default function TalentPoolPage() {
             </header>
 
             {/* Search Bar */}
-            <div className="glass-panel p-6 sm:p-8 rounded-[2rem] sm:rounded-3xl mb-8 sm:mb-12 border border-[var(--card-border)] bg-white/[0.02]">
+            <div className="glass-panel p-6 sm:p-8 rounded-[2rem] sm:rounded-3xl mb-8 sm:mb-12 border border-[var(--card-border)] bg-[var(--obsidian-card)]/40 relative overflow-hidden shadow-2xl">
                 <div className="flex flex-col lg:flex-row gap-6 items-stretch lg:items-end">
                     <div className="flex-1">
                         <label className="text-[8px] font-black uppercase tracking-[0.3em] opacity-30 mb-3 block ml-1">
@@ -118,30 +151,73 @@ export default function TalentPoolPage() {
                         </h2>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
                         {results.map((candidate, idx) => (
                             <motion.div
                                 key={candidate.id}
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: idx * 0.05 }}
-                                className="glass-panel p-6 rounded-2xl border border-[var(--card-border)] hover:border-[var(--primary)]/30 transition-all group"
+                                onClick={() => {
+                                    setSelectedCand({
+                                        id: candidate.id,
+                                        name: candidate.name,
+                                        score: candidate.score,
+                                        explanation: candidate.explanation,
+                                        analysis: {
+                                            breakdown: {
+                                                vector_similarity: candidate.similarity,
+                                                constraint_score: candidate.score
+                                            },
+                                            matched_skills: candidate.explanation.includes('React') ? ['React'] : [], // Mocked skills for now
+                                            missing_skills: []
+                                        }
+                                    });
+                                    setIsModalOpen(true);
+                                }}
+                                className="glass-panel p-6 sm:p-8 rounded-[2.5rem] border border-[var(--card-border)] bg-[var(--obsidian-card)]/30 hover:bg-[var(--primary)]/5 hover:border-[var(--primary)]/40 transition-all duration-500 group relative overflow-hidden cursor-pointer"
                             >
-                                {/* Header */}
-                                <div className="flex items-start justify-between mb-4">
-                                    <div className="flex-1">
-                                        <h3 className="font-bold text-lg mb-1">{candidate.name}</h3>
-                                        <p className="text-[var(--foreground)]/40 text-xs font-mono">{candidate.email}</p>
+                                {/* Header: Image + Basic Info */}
+                                <div className="flex items-start gap-4 mb-5">
+                                    <div className="w-16 h-16 rounded-2xl bg-[var(--primary)]/10 border border-[var(--primary)]/20 overflow-hidden shrink-0">
+                                        <img
+                                            src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${candidate.email}`}
+                                            alt={candidate.name}
+                                            className="w-full h-full object-cover"
+                                        />
                                     </div>
-                                    <div className="text-right">
-                                        <div className="text-2xl font-black text-[var(--primary)]">
-                                            {Math.round(candidate.similarity * 100)}%
-                                        </div>
-                                        <div className="text-[8px] uppercase font-bold tracking-widest text-[var(--foreground)]/30">
-                                            Similarity
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-start justify-between">
+                                            <div>
+                                                <h3 className="font-agale italic font-bold text-lg sm:text-xl mb-1 group-hover:text-[var(--primary)] transition-colors truncate">{candidate.name}</h3>
+                                                <div className="flex flex-col gap-0.5 text-[var(--foreground)]/60 text-[10px] font-mono">
+                                                    <span className="flex items-center gap-1.5"><Mail className="w-3 h-3" /> {candidate.email}</span>
+                                                    <span className="flex items-center gap-1.5"><Phone className="w-3 h-3" /> +1 (555) 000-0000</span>
+                                                    <span className="flex items-center gap-1.5 text-emerald-400 mt-1">Expected Salary: {candidate.expected_salary || "$90k - $120k"}</span>
+                                                </div>
+                                            </div>
+                                            <div className="text-right shrink-0 ml-2">
+                                                <div className="text-2xl font-black text-[var(--primary)] font-agale italic drop-shadow-[0_0_10px_rgba(0,232,255,0.3)]">
+                                                    {Math.round(candidate.similarity * 100)}%
+                                                </div>
+                                                <div className="text-[8px] uppercase font-black tracking-[0.2em] text-[var(--foreground)]/30">
+                                                    Match
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
+
+                                {/* Skills */}
+                                {candidate.skills && candidate.skills.length > 0 && (
+                                    <div className="mb-4 flex flex-wrap gap-1.5">
+                                        {candidate.skills.slice(0, 6).map((s: string) => (
+                                            <span key={s} className="px-2 py-1 bg-white/5 border border-white/10 rounded-md text-[9px] font-bold uppercase tracking-widest text-[var(--foreground)]/70">
+                                                {s}
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
 
                                 {/* Job Context */}
                                 <div className="mb-4 p-3 bg-[var(--foreground)]/5 rounded-xl">
@@ -158,33 +234,63 @@ export default function TalentPoolPage() {
                                 </div>
 
                                 {/* Match Score */}
-                                <div className="mb-4">
-                                    <div className="flex justify-between text-[8px] uppercase font-bold tracking-widest text-[var(--foreground)]/30 mb-2">
-                                        <span>Overall Score</span>
-                                        <span>{Math.round(candidate.score * 100)}%</span>
+                                <div className="mb-6">
+                                    <div className="flex justify-between text-[8px] uppercase font-black tracking-[0.2em] text-[var(--foreground)]/30 mb-2">
+                                        <span>Candidate Score</span>
+                                        <span className="text-[var(--foreground)]/70">{Math.round(candidate.score * 100)}%</span>
                                     </div>
-                                    <div className="h-1.5 w-full bg-[var(--card-border)] rounded-full overflow-hidden">
+                                    <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden shadow-inner">
                                         <motion.div
                                             initial={{ width: 0 }}
                                             animate={{ width: `${candidate.score * 100}%` }}
-                                            className="h-full bg-gradient-to-r from-[var(--primary)] to-indigo-500"
+                                            className="h-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]"
                                         />
                                     </div>
                                 </div>
 
-                                {/* Status Badge */}
-                                <div className="flex items-center justify-between">
-                                    <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${candidate.confidence_score === 'selected'
-                                        ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
-                                        : candidate.confidence_score === 'rejected'
-                                            ? 'bg-rose-500/10 text-rose-500 border border-rose-500/20'
-                                            : 'bg-amber-500/10 text-amber-500 border border-amber-500/20'
-                                        }`}>
-                                        {candidate.confidence_score || 'Under Review'}
-                                    </span>
-                                    <button className="text-[10px] font-bold uppercase tracking-widest text-[var(--primary)] hover:text-[var(--primary)]/70 transition-colors">
-                                        View Profile →
-                                    </button>
+                                {/* Status Badge and Actions */}
+                                <div className="flex flex-col gap-3 mt-4">
+                                    <div className="flex items-center justify-between">
+                                        <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${candidate.confidence_score === 'selected'
+                                            ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
+                                            : candidate.confidence_score === 'rejected'
+                                                ? 'bg-rose-500/10 text-rose-500 border border-rose-500/20'
+                                                : 'bg-amber-500/10 text-amber-500 border border-amber-500/20'
+                                            }`}>
+                                            {candidate.confidence_score || 'Under Review'}
+                                        </span>
+                                    </div>
+                                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mt-2">
+                                        {candidate.resume_text && (
+                                            <button
+                                                onClick={(e) => handleDownloadResume(e, candidate)}
+                                                className="flex-1 py-3 border border-[var(--card-border)] text-[var(--foreground)]/60 rounded-xl text-[10px] font-black uppercase tracking-[0.1em] hover:bg-purple-400/10 hover:text-purple-400 hover:border-purple-400/30 flex items-center justify-center gap-2 transition-all"
+                                            >
+                                                <Download className="w-3 h-3" />
+                                                Resume PDF
+                                            </button>
+                                        )}
+                                        <button
+                                            onClick={async (e) => {
+                                                e.stopPropagation();
+                                                const btn = document.getElementById(`invite-btn-${candidate.id}`);
+                                                if (btn) {
+                                                    btn.innerText = 'Request Sent!';
+                                                    btn.classList.add('bg-emerald-500/20', 'text-emerald-500');
+                                                    btn.classList.remove('bg-[var(--primary)]', 'text-black');
+                                                }
+                                                // Mocking an invite endpoint
+                                                try {
+                                                    // await axios.post(`${API_BASE}/candidates/${candidate.id}/invite`);
+                                                } catch (e) { }
+                                            }}
+                                            id={`invite-btn-${candidate.id}`}
+                                            className="flex-[2] py-3 bg-[var(--primary)] text-black rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-[0_0_15px_rgba(0,232,255,0.2)] hover:brightness-110 flex items-center justify-center gap-2 transition-all"
+                                        >
+                                            <Sparkles className="w-3 h-3" />
+                                            Send Request
+                                        </button>
+                                    </div>
                                 </div>
                             </motion.div>
                         ))}
@@ -201,6 +307,11 @@ export default function TalentPoolPage() {
                     </p>
                 </div>
             )}
+            <ReasoningModal
+                candidate={selectedCand}
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+            />
         </div>
     );
 }

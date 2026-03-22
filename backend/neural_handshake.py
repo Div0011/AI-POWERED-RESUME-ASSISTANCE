@@ -6,7 +6,7 @@ import os
 import sys
 sys.path.insert(0, os.path.dirname(__file__))
 
-from services.analyzer import RequirementAnalyzer
+from services.analyzer import ResumeAnalyzer
 from dotenv import load_dotenv
 
 # Load root .env
@@ -18,7 +18,7 @@ print("=" * 60)
 print(f"API Key: {os.getenv('GEMINI_API_KEY')[:10]}...")
 print()
 
-analyzer = RequirementAnalyzer()
+analyzer = ResumeAnalyzer()
 
 print("Testing Job Description Generation...")
 print("Expected: Model fallback chain activation if quota hit")

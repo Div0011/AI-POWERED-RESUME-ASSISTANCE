@@ -1,115 +1,110 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Briefcase, Users, ArrowRight } from "lucide-react";
+import { PipelineOrb, NeuralButton } from "@/components/wireframe/UI";
+import { Zap, Target, ArrowRight, Shield } from "lucide-react";
 
-export default function Home() {
+export default function NeuralHome() {
   const router = useRouter();
-  // Animation Phase: 0 = Init (Big Logo), 1 = Move Logo, 2 = Show Content
-  const [phase, setPhase] = useState(0);
+  const [hoveredPanel, setHoveredPanel] = useState<"recruiter" | "candidate" | null>(null);
 
-  useEffect(() => {
-    // Sequence the Intro
-    // Phase 0 -> 1: Move Logo after 1s
-    const timer1 = setTimeout(() => setPhase(1), 1000);
-    // Phase 1 -> 2: Show Content after logo settles (approx 0.8s transition)
-    const timer2 = setTimeout(() => setPhase(2), 1800);
-
-    return () => {
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-    };
-  }, []);
-
-  const roles = [
-    {
-      id: 'recruiter',
-      label: "RECRUITERS",
-      desc: "Hire faster with AI automation.",
-      path: "/recruiter",
-    },
-    {
-      id: 'candidate',
-      label: "CANDIDATES",
-      desc: "Optimize your resume & get hired.",
-      path: "/candidate",
-    }
-  ];
+  const handlePanelClick = (role: "recruiter" | "candidate") => {
+    const subRoute = role === "recruiter" ? "dashboard" : "jobs";
+    router.push(`/${role}/${subRoute}`);
+  };
 
   return (
-    <div className="min-h-screen relative overflow-hidden font-sans selection:bg-[var(--primary)] selection:text-black">
-      {/* Background Glow (Cinematic Atmosphere) */}
-      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-[-50%] left-1/2 -translate-x-1/2 w-[140vw] h-[100vh] bg-[var(--primary)]/10 blur-[180px] rounded-full mix-blend-screen" />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[800px] h-[800px] bg-purple-500/5 blur-[120px] rounded-full mix-blend-screen" />
+    <div className="flex flex-col lg:flex-row h-screen bg-[var(--navy)] overflow-hidden relative">
+      
+      {/* Central Neural Core (Visible on Desktop) */}
+      <div className="hidden lg:flex absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 pointer-events-none items-center justify-center">
+         <div className="relative group">
+            <div className="absolute inset-x-0 top-0 h-[200px] w-[200px] bg-[var(--cyan)] rounded-full blur-[120px] opacity-[0.1] -translate-x-1/2 -translate-y-1/2" />
+            <PipelineOrb size={280} />
+         </div>
       </div>
 
-      {/* 2. Kinetic Logo Animation */}
+      {/* RECRUITER CHANNEL */}
       <motion.div
-        initial={{ top: "50%", left: "50%", x: "-50%", y: "-50%", fontSize: "20vw" }}
-        animate={phase >= 1 ? { top: "20px", left: "20px", x: "0%", y: "0%", fontSize: "2rem" } : {}}
-        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-        className="absolute z-50 flex flex-col sm:flex-row items-center gap-4 font-bold tracking-tighter text-[var(--foreground)] font-agale leading-none whitespace-nowrap"
+        className="flex-1 flex flex-col items-center justify-center p-12 cursor-pointer relative overflow-hidden group z-10 border-r border-white/5"
+        initial={{ flex: 1 }}
+        animate={hoveredPanel === "recruiter" ? { flex: 1.4 } : hoveredPanel === "candidate" ? { flex: 0.6 } : { flex: 1 }}
+        transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
+        onHoverEnter={() => setHoveredPanel("recruiter")}
+        onHoverLeave={() => setHoveredPanel(null)}
+        onClick={() => handlePanelClick("recruiter")}
       >
-        <span className="block">GET IT!</span>
-        {phase >= 1 && (
-          <motion.span
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 0.3, x: 0 }}
-            className="hidden sm:block text-[10px] font-mono uppercase tracking-[0.4em] mt-2 sm:mt-0"
-          >
-                // AGENTIC_RECRUITMENT_OS
-          </motion.span>
-        )}
+        {/* Ambient Neural Lines */}
+        <div className="absolute inset-0 opacity-[0.03] pointer-events-none group-hover:opacity-[0.07] transition-opacity">
+           <svg width="100%" height="100%">
+              <pattern id="gridRec" width="40" height="40" patternUnits="userSpaceOnUse">
+                 <path d="M 40 0 L 0 0 0 40" fill="none" stroke="var(--cyan)" strokeWidth="0.5"/>
+              </pattern>
+              <rect width="100%" height="100%" fill="url(#gridRec)" />
+           </svg>
+        </div>
+
+        <motion.div className="relative z-20 text-center max-w-sm">
+          <div className="w-16 h-16 rounded-3xl bg-[var(--navy2)] border border-white/10 flex items-center justify-center mx-auto mb-8 shadow-[0_0_30px_rgba(0,196,255,0.05)] group-hover:border-[var(--cyan)] transition-colors">
+             <Shield className="w-8 h-8 text-[var(--cyan)] opacity-60" />
+          </div>
+          <div className="text-[10px] text-[var(--cyan)] font-black uppercase tracking-[0.5em] mb-4 neural-glow-cyan">Enterprise Matrix</div>
+          <h1 className="text-5xl font-black font-display text-[var(--text)] tracking-tighter mb-4 leading-none">RECRUITER</h1>
+          <p className="text-xs text-[var(--muted)] leading-relaxed italic opacity-60 mb-8">
+             Synchronize candidate neural signals with global mission requirements.
+          </p>
+          <NeuralButton variant="secondary" size="md" className="group-hover:bg-[var(--cyan)] group-hover:text-black transition-all">
+             Initialize Console <ArrowRight className="w-4 h-4 ml-2" />
+          </NeuralButton>
+        </motion.div>
       </motion.div>
 
-      {/* 3. Main Content (Fades in after logo moves) */}
-      {phase >= 2 && (
-        <div className="flex flex-col items-center justify-start w-full max-w-7xl mx-auto px-4 sm:px-6 z-10 pt-24 sm:pt-32 pb-12">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ staggerChildren: 0.2 }}
-            className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8 w-full max-w-4xl mt-4 sm:mt-8"
-          >
-            {roles.map((role) => (
-              <motion.div
-                key={role.id}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-                onClick={() => router.push(role.path)}
-                className="glass-panel p-6 sm:p-10 rounded-2xl sm:rounded-3xl cursor-pointer group relative overflow-hidden transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl flex flex-col items-start justify-between min-h-[300px] sm:min-h-[400px]"
-              >
-                {/* Card Content */}
-                <div className="relative z-10 w-full">
-                  <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl flex items-center justify-center mb-6 sm:mb-8 bg-[var(--card-bg)] border border-[var(--card-border)] text-[var(--primary)] shadow-lg group-hover:scale-110 transition-transform duration-300">
-                    {role.id === 'recruiter' ? <Briefcase className="w-6 h-6 sm:w-8 sm:h-8" /> : <Users className="w-6 h-6 sm:w-8 sm:h-8" />}
-                  </div>
-
-                  <h3 className="text-2xl sm:text-4xl font-bold mb-2 sm:mb-4 text-[var(--foreground)] font-agale tracking-wide">
-                    {role.label}
-                  </h3>
-                  <p className="text-[var(--foreground)]/60 text-sm sm:text-lg leading-relaxed font-light">
-                    {role.desc}
-                  </p>
-                </div>
-
-                <div className="mt-8 sm:mt-12 w-full flex items-center justify-between border-t border-[var(--card-border)] pt-4 sm:pt-6">
-                  <span className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] text-[var(--foreground)]/40 group-hover:text-[var(--primary)] transition-colors">
-                    Initialize
-                  </span>
-                  <div className="p-2 sm:p-3 rounded-full bg-[var(--foreground)]/5 group-hover:bg-[var(--primary)] group-hover:text-black transition-all">
-                    <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
+      {/* CANDIDATE CHANNEL */}
+      <motion.div
+        className="flex-1 flex flex-col items-center justify-center p-12 cursor-pointer relative overflow-hidden group z-10"
+        initial={{ flex: 1 }}
+        animate={hoveredPanel === "candidate" ? { flex: 1.4 } : hoveredPanel === "recruiter" ? { flex: 0.6 } : { flex: 1 }}
+        transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
+        onHoverEnter={() => setHoveredPanel("candidate")}
+        onHoverLeave={() => setHoveredPanel(null)}
+        onClick={() => handlePanelClick("candidate")}
+      >
+        {/* Ambient Neural Lines */}
+        <div className="absolute inset-0 opacity-[0.03] pointer-events-none group-hover:opacity-[0.07] transition-opacity">
+           <svg width="100%" height="100%">
+              <pattern id="gridCand" width="40" height="40" patternUnits="userSpaceOnUse">
+                 <path d="M 40 0 L 0 0 0 40" fill="none" stroke="var(--purple)" strokeWidth="0.5"/>
+              </pattern>
+              <rect width="100%" height="100%" fill="url(#gridCand)" />
+           </svg>
         </div>
-      )}
+
+        <motion.div className="relative z-20 text-center max-w-sm">
+          <div className="w-16 h-16 rounded-3xl bg-[var(--navy2)] border border-white/10 flex items-center justify-center mx-auto mb-8 shadow-[0_0_30px_rgba(187,0,253,0.05)] group-hover:border-[var(--purple)] transition-colors">
+             <Target className="w-8 h-8 text-[var(--purple)] opacity-60" />
+          </div>
+          <div className="text-[10px] text-[var(--purple)] font-black uppercase tracking-[0.5em] mb-4 neural-glow-purple">Talent Pulse</div>
+          <h1 className="text-5xl font-black font-display text-[var(--text)] tracking-tighter mb-4 leading-none">CANDIDATE</h1>
+          <p className="text-xs text-[var(--muted)] leading-relaxed italic opacity-60 mb-8">
+             Simulate career trajectories and unlock neural job mission signals.
+          </p>
+          <NeuralButton variant="secondary" size="md" className="group-hover:bg-[var(--purple)] group-hover:text-black transition-all border-[rgba(214,116,255,0.3)]">
+             Unlock Journey <ArrowRight className="w-4 h-4 ml-2" />
+          </NeuralButton>
+        </motion.div>
+      </motion.div>
+
+      {/* System Status Tracker (Bottom) */}
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-50 text-[10px] font-black text-[var(--dim)] uppercase tracking-[0.4em] flex items-center gap-4">
+         <div className="flex items-center gap-2">
+            <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
+            Neural Link Online
+         </div>
+         <div className="w-1 h-1 bg-white/10 rounded-full" />
+         <div className="opacity-40">Build 0.4.2-Immersive</div>
+      </div>
     </div>
   );
 }

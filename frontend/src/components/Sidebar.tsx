@@ -13,6 +13,7 @@ import { useLayout } from '@/context/LayoutContext';
 
 const recruiterMenuItems = [
     { name: 'Dashboard', icon: LayoutDashboard, path: '/recruiter/dashboard' },
+    { name: 'Post Job', icon: Briefcase, path: '/recruiter/jobs/new-enhanced' },
     { name: 'Talent Pool', icon: Users, path: '/recruiter/talent-pool' },
     { name: 'Analytics', icon: BarChart3, path: '/recruiter/analytics' },
 ];
@@ -21,6 +22,7 @@ const candidateMenuItems = [
     { name: 'Mission Board', icon: Briefcase, path: '/candidate/jobs' },
     { name: 'ATS Simulator', icon: FileText, path: '/candidate/check' },
     { name: 'AI Interviewer', icon: MessageSquare, path: '/candidate/interview' },
+    { name: 'Resume Builder', icon: Sparkles, path: '/candidate/resume' },
 ];
 
 export default function Sidebar() {

@@ -37,22 +37,43 @@ const ClientLayoutContent = ({ children }: { children: React.ReactNode }) => {
     // const { isCollapsed } = useLayout(); // No longer needed for top nav
     const isLandingPage = pathname === "/";
     const showMenu = pathname.startsWith('/recruiter') || pathname.startsWith('/candidate');
+    const isWireframeRoute = pathname.startsWith('/recruiter') || pathname.startsWith('/candidate');
 
     // Simulating "AI Processing" loading state for demo
     const [isProcessing, setIsProcessing] = useState(false);
 
     useEffect(() => {
-        if (authLoading) return;
+        // Removed strict route guarding to allow the user to freely explore
+        // both the Candidate and Recruiter hubs from the landing page.
+    }, [pathname, token, user, authLoading, router, isLandingPage]);
 
-        // AUTH GUARD REMOVED - TOTAL ACCESS ENABLED
-        // Redirection logic deactivated to allow pure agentic exploration
-    }, [pathname, token, user, authLoading, router]);
+    if (isWireframeRoute) {
+        return (
+            <div className="min-h-screen text-[var(--foreground)] selection:bg-[var(--primary)] selection:text-white">
+                <LiquidProgressBar isLoading={authLoading || isProcessing} />
+                <ErrorBoundary>
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={pathname}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="h-full"
+                        >
+                            {children}
+                        </motion.div>
+                    </AnimatePresence>
+                </ErrorBoundary>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen text-[var(--foreground)] selection:bg-[var(--primary)] selection:text-white">
             <LiquidProgressBar isLoading={authLoading || isProcessing} />
 
-            {!isLandingPage && !showMenu && <BackButton />}
+            {!isLandingPage && <BackButton />}
 
             {/* Top Right Controls - Cleaned up */}
             <div className="fixed top-6 right-6 z-50 flex items-center gap-3">
@@ -62,7 +83,7 @@ const ClientLayoutContent = ({ children }: { children: React.ReactNode }) => {
             {showMenu && <HeaderMenu />}
 
             <main
-                className="transition-all duration-500 ease-in-out min-h-screen pt-24 px-6 md:px-12 max-w-7xl mx-auto"
+                className="min-h-screen pt-24 px-6 md:px-12 max-w-7xl mx-auto"
             >
                 <ErrorBoundary>
                     <AnimatePresence mode="wait">
@@ -83,6 +104,7 @@ const ClientLayoutContent = ({ children }: { children: React.ReactNode }) => {
             {/* ActionHUD (Plus Button) Removed */}
         </div>
     );
+
 }
 
 export const ClientLayoutWrapper = ({ children }: { children: React.ReactNode }) => {

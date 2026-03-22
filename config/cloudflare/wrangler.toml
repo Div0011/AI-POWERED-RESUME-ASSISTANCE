@@ -1,0 +1,33 @@
+# Cloudflare Workers Configuration
+name = "get-it-api-gateway"
+type = "javascript"
+account_id = "YOUR_CLOUDFLARE_ACCOUNT_ID"
+workers_dev = true
+route = "api.yourdomain.com/*"
+zone_id = "YOUR_CLOUDFLARE_ZONE_ID"
+
+[env.production]
+name = "get-it-api-gateway-prod"
+route = "https://api.yourdomain.com/*"
+zone_id = "YOUR_CLOUDFLARE_ZONE_ID"
+
+[build]
+command = "npm run build"
+cwd = "./config/cloudflare"
+main = "src/index.ts"
+
+# KV Namespaces for caching
+[[kv_namespaces]]
+binding = "CACHE"
+id = "YOUR_KV_NAMESPACE_ID"
+preview_id = "YOUR_KV_PREVIEW_ID"
+
+[[kv_namespaces]]
+binding = "CONFIG"
+id = "YOUR_CONFIG_NAMESPACE_ID"
+preview_id = "YOUR_CONFIG_PREVIEW_ID"
+
+# Environment Variables
+[env.production.vars]
+API_BACKEND = "https://api-backend.yourdomain.com"
+ALLOWED_ORIGINS = "https://yourdomain.com,https://www.yourdomain.com"

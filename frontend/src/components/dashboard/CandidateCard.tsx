@@ -32,10 +32,10 @@ export default function CandidateCard({ candidate, onViewReasoning, onApprove, o
 
     return (
         <motion.div
-            layout // Enable layout animation for sort/filter
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="group relative bg-[var(--card-bg)]/80 backdrop-blur-[16px] border border-[var(--card-border)] p-4 sm:p-6 rounded-2xl sm:rounded-3xl hover:border-[var(--primary)]/30 transition-all duration-300 shadow-xl"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            onClick={() => onViewReasoning(candidate)}
+            className="group relative bg-[var(--card-bg)] border border-[var(--card-border)] p-4 sm:p-6 rounded-2xl sm:rounded-3xl hover:border-[var(--primary)]/30 transition-all duration-300 shadow-xl cursor-pointer"
         >
             {/* Top Row: Name & Score */}
             <div className="flex justify-between items-start mb-4 sm:mb-6">
@@ -117,14 +117,14 @@ export default function CandidateCard({ candidate, onViewReasoning, onApprove, o
             {/* Action Buttons - Stacked on very small devices, row on others */}
             <div className="flex flex-row gap-2">
                 <button
-                    onClick={() => onApprove(candidate.id)}
+                    onClick={(e) => { e.stopPropagation(); onApprove(candidate.id); }}
                     className="flex-1 flex items-center justify-center gap-1 sm:gap-2 py-2.5 sm:py-3 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 border border-emerald-500/20 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-bold transition-all active:scale-95"
                 >
                     <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     Accept
                 </button>
                 <button
-                    onClick={() => onDecline(candidate.id)}
+                    onClick={(e) => { e.stopPropagation(); onDecline(candidate.id); }}
                     className="flex-1 flex items-center justify-center gap-1 sm:gap-2 py-2.5 sm:py-3 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border border-rose-500/20 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-bold transition-all active:scale-95"
                 >
                     <XCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />

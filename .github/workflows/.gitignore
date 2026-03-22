@@ -1,0 +1,34 @@
+node_modules/
+.next/
+out/
+build/
+dist/
+venv/
+.venv/
+__pycache__/
+*.pyc
+.env
+.env.local
+.DS_Store
+backend/uploads/
+backend/resume.db
+backend/token.pickle
+backend/token.json
+backend/*.json.json
+token.pickle
+token.json
+service-account.json
+*.json.json
+.vscode/
+temp_processing/
+!credentials.json.example
+
+# Database & Logs
+*.db
+backend/server_log_cmd.txt
+builder_diag.txt
+crash_log.txt
+auth_url.txt
+
+# Internal Documentation (Not for GitHub)
+INTERNAL_EXPLANATION.md

@@ -23,6 +23,12 @@ class UserResponse(BaseModel):
     role: str
     model_config = ConfigDict(from_attributes=True)
 
+class UserSettingsUpdate(BaseModel):
+    display_name: Optional[str] = None
+    email_notifications: Optional[bool] = None
+    message_notifications: Optional[bool] = None
+    marketing_emails: Optional[bool] = None
+
 class Token(BaseModel):
     access_token: str
     token_type: str
@@ -63,6 +69,8 @@ class CandidateResponse(BaseModel):
     id: int
     name: str
     email: str
+    skills: Optional[List[str]] = None
+    resume_text: Optional[str] = None
     score: Optional[float] = None
     confidence_score: Optional[str] = None
     explanation: Optional[str] = None
@@ -96,6 +104,19 @@ class BulletImproveRequest(BaseModel):
 class BulletImproveResponse(BaseModel):
     original: str
     improved: str
+
+class ResumeImproveRequest(BaseModel):
+    resume_text: str
+
+class ResumeImproveResponse(BaseModel):
+    improved_resume: str
+    extracted_data: Dict[str, Any]
+
+class CandidateOptInRequest(BaseModel):
+    candidate_email: str
+    resume_text: str
+    name: Optional[str] = None
+    skills: Optional[List[str]] = None
 
 class VectorSearchRequest(BaseModel):
     query: str
@@ -136,6 +157,10 @@ class InterviewStepResponse(BaseModel):
 class InterviewFeedbackRequest(BaseModel):
     job_id: int
     history: List[Dict[str, str]]
+
+class InterviewFeedbackResponse(BaseModel):
+    feedback: str
+
 class JobExpandRequest(BaseModel):
     keywords: List[str]
 
